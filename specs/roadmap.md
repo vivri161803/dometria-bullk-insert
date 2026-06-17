@@ -58,29 +58,41 @@
 
 ## Phase 3 — Block 2: Contract Determination
 
-**Goal:** Determine the target JSON schema from scored chunks using hybrid RB-RAG.
+**Goal:** Determine the target category path (`lv1/lv2/lv3`) from scored chunks using a two-stage hybrid approach — no knowledge graph.
+
+> **Architecture note:** The original architecture (`architecture.md`) envisioned a "graph matching" approach for lv2/lv3 deduction. Since the category structure is a simple 3-level tree with only 3 roots (not a complex graph), we adopted a simpler and more effective approach: LLM for lv1 → cosine similarity + weighted majority voting for lv2+lv3.
 
 | Task | Detail |
 |---|---|
-| `src/bulk_insert/blocks/contract.py` | LLM extracts lv1 field (Instructor-constrained to a predefined enum). Graph matching deduces lv2/lv3. |
-| Cosine similarity | Embed chunks + candidate schema paths via sentence-transformers; compute cosine similarity; weighted majority vote. |
-| Unit tests | Test with known contracts; test voting logic; test graph matching. |
+| `src/bulk_insert/blocks/contract.py` | Two-stage pipeline: **Stage 1** — Instructor-constrained LLM call (GPT-4o-mini) classifies document into one of 3 `Level1Literal` values. **Stage 2** — Sentence-transformers (`paraphrase-multilingual-MiniLM-L12-v2`) encodes chunk texts and candidate category labels; cosine similarity + relevance-weighted majority vote selects the winning `(lv2, lv3)` pair. |
+| Chunk filtering | Filter chunks by `relevance_score >= CONTRACT_MIN_SCORE` (default 5), select top-k (default 5) by descending score. |
+| Category helpers | `get_candidate_paths(lv1)` and `get_candidate_labels(lv1)` expand the `CATEGORY_TREE` into candidate `(lv2, lv3)` pairs with human-readable labels for embedding. |
+| Unit tests | Test chunk filtering, mocked LLM lv1 extraction, real embedding-based voting (restaurant/villa texts), end-to-end with mocked LLM + real embeddings. |
 
-**Exit criteria:** Given scored chunks, outputs the correct `Contract` with deterministic schema selection.
+**Output:** `Contract(lv1, lv2, lv3, schema_def={})` — the category path is determined; schema loading is deferred to Block 3.
+
+**Exit criteria:** Given scored chunks, outputs the correct `Contract` with the correct category path. The `lv3` code maps 1:1 to a contract JSON file in `contracts/`.
 
 ---
 
 ## Phase 4 — Block 3: Asset Extraction
 
-**Goal:** Populate the contract using a high-capacity LLM.
+**Goal:** Load the contract schema and populate it using a high-capacity LLM.
+
+Block 3 receives the `Contract(lv1, lv2, lv3, schema_def={})` from Block 2. It is responsible for:
+
+1. **Loading the contract schema** — using the `lv3` code to locate the matching JSON file in `contracts/` (naming convention: `{id}_{lv3_code}.json`). Each file contains the full field definitions (`data.fields.native`) with field keys, types, labels, and constraints.
+2. **Building a dynamic Pydantic model** — converting the contract field definitions into a Pydantic model (via `pydantic.create_model()`) to serve as the `response_model` for the Instructor call.
+3. **LLM extraction** — passing scored chunks + the dynamic schema to GPT-4o via Instructor. The constrained output guarantees the extracted data conforms to the contract structure.
 
 | Task | Detail |
 |---|---|
-| `src/bulk_insert/blocks/extraction.py` | Instructor + openai SDK call to GPT-4o. Input: scored chunks + empty contract schema. Output: populated `Asset` Pydantic model. |
+| `src/bulk_insert/models/contract_loader.py` | `load_contract_schema(lv3: str) -> dict` — locates and reads the contract JSON file by lv3 code. Returns the parsed `data` section with field definitions. |
+| `src/bulk_insert/blocks/extraction.py` | `build_dynamic_model(schema: dict) -> type[BaseModel]` — converts contract field definitions into a dynamic Pydantic model. `extract_asset(chunks, contract, cfg) -> Asset` — orchestrates schema loading, model building, and LLM extraction. |
 | Per-chunk extraction | Process chunks sequentially (or batched), merging partial results into the final asset. |
-| Unit tests | Mock LLM; verify output conforms to contract schema; test merge logic. |
+| Unit tests | Mock LLM; verify output conforms to contract schema; test contract loading by lv3; test dynamic model building; test merge logic. |
 
-**Exit criteria:** Given chunks + contract, produces a valid `Asset` that passes Pydantic validation.
+**Exit criteria:** Given chunks + `Contract(lv1, lv2, lv3)`, loads the correct schema, produces a valid `Asset` that passes Pydantic validation.
 
 ---
 

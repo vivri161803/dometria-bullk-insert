@@ -1,0 +1,1908 @@
+{
+  "data": {
+    "schema_version": "3",
+    "generated_at": "2026-06-17T17:02:39+02:00",
+    "category": {
+      "id": 223,
+      "level": 3,
+      "name": "Retail & Distribuzione",
+      "parent": {
+        "id": 217,
+        "level": 2,
+        "name": "Macro Settore",
+        "parent": {
+          "id": 216,
+          "level": 1,
+          "name": "Aziende e operazioni straordinarie"
+        }
+      }
+    },
+    "fields": {
+      "native": [
+        {
+          "key": "name",
+          "label": "Denominazione",
+          "source": "standard",
+          "usage": "native",
+          "type": "text",
+          "is_required": true,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": null,
+          "unit": null,
+          "storage": "assets.name",
+          "aliases": [],
+          "transform": [
+            "trim",
+            "normalize_whitespace"
+          ]
+        },
+        {
+          "key": "geo_municipality_id",
+          "label": "Comune amministrativo",
+          "source": "native_location",
+          "usage": "native",
+          "type": "foreign_id",
+          "is_required": true,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": {
+            "target_table": "geo_municipalities",
+            "nullable": true
+          },
+          "unit": null,
+          "storage": "assets.geo_municipality_id",
+          "aliases": [],
+          "transform": [
+            "parse_integer",
+            "validate_exists_geo_municipality"
+          ]
+        },
+        {
+          "key": "country",
+          "label": "Nazione",
+          "source": "native_location",
+          "usage": "native",
+          "type": "iso_alpha2",
+          "is_required": true,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": {
+            "format": "ISO 3166-1 alpha-2"
+          },
+          "unit": null,
+          "storage": "assets.country",
+          "aliases": [],
+          "transform": [
+            "trim",
+            "uppercase",
+            "validate_iso3166_alpha2"
+          ]
+        },
+        {
+          "key": "locality",
+          "label": "Localita",
+          "source": "native_location",
+          "usage": "native",
+          "type": "text",
+          "is_required": false,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": null,
+          "unit": null,
+          "storage": "assets.locality",
+          "aliases": [],
+          "transform": [
+            "trim",
+            "normalize_whitespace"
+          ]
+        },
+        {
+          "key": "address_line",
+          "label": "Indirizzo",
+          "source": "native_location",
+          "usage": "native",
+          "type": "text",
+          "is_required": true,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": null,
+          "unit": null,
+          "storage": "assets.address_line",
+          "aliases": [],
+          "transform": [
+            "trim",
+            "normalize_whitespace"
+          ]
+        },
+        {
+          "key": "latitude",
+          "label": "Latitudine GPS",
+          "source": "native_location",
+          "usage": "native",
+          "type": "decimal_pair",
+          "is_required": false,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": {
+            "crs": "WGS84",
+            "format": "decimal_degrees",
+            "both_or_none": true
+          },
+          "unit": null,
+          "storage": "assets.latitude",
+          "aliases": [],
+          "transform": [
+            "parse_decimal_pair",
+            "validate_wgs84"
+          ]
+        },
+        {
+          "key": "longitude",
+          "label": "Longitudine GPS",
+          "source": "native_location",
+          "usage": "native",
+          "type": "decimal_pair",
+          "is_required": false,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": {
+            "crs": "WGS84",
+            "format": "decimal_degrees",
+            "both_or_none": true
+          },
+          "unit": null,
+          "storage": "assets.longitude",
+          "aliases": [],
+          "transform": [
+            "parse_decimal_pair",
+            "validate_wgs84"
+          ]
+        },
+        {
+          "key": "municipality_id",
+          "label": "ID Comune (risoluzione)",
+          "source": "native_location",
+          "usage": "native",
+          "type": "integer",
+          "is_required": false,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": {
+            "min": null,
+            "max": null,
+            "precision": null,
+            "currency": null,
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.municipality_id",
+          "aliases": [],
+          "transform": [
+            "parse_integer",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "region_string",
+          "label": "Regione (testo)",
+          "source": "native_location",
+          "usage": "native",
+          "type": "text",
+          "is_required": false,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": null,
+          "unit": null,
+          "storage": "assets.region_string",
+          "aliases": [],
+          "transform": [
+            "trim",
+            "normalize_whitespace"
+          ]
+        },
+        {
+          "key": "province_string",
+          "label": "Provincia (testo)",
+          "source": "native_location",
+          "usage": "native",
+          "type": "text",
+          "is_required": false,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": null,
+          "unit": null,
+          "storage": "assets.province_string",
+          "aliases": [],
+          "transform": [
+            "trim",
+            "normalize_whitespace"
+          ]
+        },
+        {
+          "key": "municipality_string",
+          "label": "Comune (testo)",
+          "source": "native_location",
+          "usage": "native",
+          "type": "text",
+          "is_required": false,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": null,
+          "unit": null,
+          "storage": "assets.municipality_string",
+          "aliases": [],
+          "transform": [
+            "trim",
+            "normalize_whitespace"
+          ]
+        },
+        {
+          "key": "businesses_fatturato_ultimo_esercizio_eur",
+          "label": "Fatturato ultimo esercizio (€)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "currency",
+          "is_required": true,
+          "completeness_score": 5,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": null,
+            "currency": "EUR",
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.businesses_fatturato_ultimo_esercizio_eur",
+          "confidence_storage": "assets.custom_fields_confidence.businesses_fatturato_ultimo_esercizio_eur",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_decimal",
+            "round_to_currency",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "businesses_ebitda_eur",
+          "label": "EBITDA (€)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "currency",
+          "is_required": true,
+          "completeness_score": 5,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": null,
+            "currency": "EUR",
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.businesses_ebitda_eur",
+          "confidence_storage": "assets.custom_fields_confidence.businesses_ebitda_eur",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_decimal",
+            "round_to_currency",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "businesses_ebitda_margin_pct",
+          "label": "EBITDA margin (%)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "percentage",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": 100,
+            "precision": null,
+            "currency": null,
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.businesses_ebitda_margin_pct",
+          "confidence_storage": "assets.custom_fields_confidence.businesses_ebitda_margin_pct",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_decimal",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "businesses_utile_netto_eur",
+          "label": "Utile netto (€)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "currency",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": null,
+            "currency": "EUR",
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.businesses_utile_netto_eur",
+          "confidence_storage": "assets.custom_fields_confidence.businesses_utile_netto_eur",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_decimal",
+            "round_to_currency",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "businesses_trend_fatturato_ultimo_triennio",
+          "label": "Trend fatturato ultimo triennio",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "select",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "Crescita",
+              "Stabile",
+              "Calo"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.businesses_trend_fatturato_ultimo_triennio",
+          "confidence_storage": "assets.custom_fields_confidence.businesses_trend_fatturato_ultimo_triennio",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "match_closest_option"
+          ]
+        },
+        {
+          "key": "businesses_posizione_finanziaria_netta_eur",
+          "label": "Posizione Finanziaria Netta (€)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "currency",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": null,
+            "currency": "EUR",
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.businesses_posizione_finanziaria_netta_eur",
+          "confidence_storage": "assets.custom_fields_confidence.businesses_posizione_finanziaria_netta_eur",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_decimal",
+            "round_to_currency",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "businesses_patrimonio_netto_eur",
+          "label": "Patrimonio netto (€)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "currency",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": null,
+            "currency": "EUR",
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.businesses_patrimonio_netto_eur",
+          "confidence_storage": "assets.custom_fields_confidence.businesses_patrimonio_netto_eur",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_decimal",
+            "round_to_currency",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "businesses_prezzo_richiesto_valutazione_eur",
+          "label": "Prezzo richiesto / Valutazione (€)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "currency",
+          "is_required": true,
+          "completeness_score": 5,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": null,
+            "currency": "EUR",
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.businesses_prezzo_richiesto_valutazione_eur",
+          "confidence_storage": "assets.custom_fields_confidence.businesses_prezzo_richiesto_valutazione_eur",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_decimal",
+            "round_to_currency",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "businesses_comune_sede_legale",
+          "label": "Comune sede legale",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "text",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "aggregated",
+          "constraints": null,
+          "unit": null,
+          "storage": "assets.custom_fields.businesses_comune_sede_legale",
+          "confidence_storage": "assets.custom_fields_confidence.businesses_comune_sede_legale",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "normalize_whitespace"
+          ]
+        },
+        {
+          "key": "businesses_sede_operativa_macro_area",
+          "label": "Sede operativa (macro-area)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "select",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "Nord-Ovest",
+              "Nord-Est",
+              "Centro",
+              "Sud",
+              "Isole",
+              "Multi-area"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.businesses_sede_operativa_macro_area",
+          "confidence_storage": "assets.custom_fields_confidence.businesses_sede_operativa_macro_area",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "match_closest_option"
+          ]
+        },
+        {
+          "key": "businesses_macro_settore",
+          "label": "Macro-settore",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "select",
+          "is_required": true,
+          "completeness_score": 5,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "Industria",
+              "Logistica",
+              "Costruzioni",
+              "Energia",
+              "Agroindustria",
+              "Hospitality",
+              "Sanità",
+              "ICT",
+              "Servizi imprese",
+              "Ambiente",
+              "Altro"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.businesses_macro_settore",
+          "confidence_storage": "assets.custom_fields_confidence.businesses_macro_settore",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "match_closest_option"
+          ]
+        },
+        {
+          "key": "businesses_settore_operativo",
+          "label": "Settore operativo",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "text",
+          "is_required": true,
+          "completeness_score": 5,
+          "blind_visibility_mode": "visible",
+          "constraints": null,
+          "unit": null,
+          "storage": "assets.custom_fields.businesses_settore_operativo",
+          "confidence_storage": "assets.custom_fields_confidence.businesses_settore_operativo",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "normalize_whitespace"
+          ]
+        },
+        {
+          "key": "businesses_ateco_primario",
+          "label": "ATECO primario",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "text",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "hidden",
+          "constraints": null,
+          "unit": null,
+          "storage": "assets.custom_fields.businesses_ateco_primario",
+          "confidence_storage": "assets.custom_fields_confidence.businesses_ateco_primario",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "normalize_whitespace"
+          ]
+        },
+        {
+          "key": "businesses_ateco_secondari_macro_settore",
+          "label": "ATECO secondari (macro-settore)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "select",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "hidden",
+          "constraints": {
+            "options": [
+              "Industria",
+              "Logistica",
+              "Costruzioni",
+              "Energia",
+              "Agroindustria",
+              "Hospitality",
+              "Sanità",
+              "ICT",
+              "Servizi imprese",
+              "Ambiente",
+              "Altro"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.businesses_ateco_secondari_macro_settore",
+          "confidence_storage": "assets.custom_fields_confidence.businesses_ateco_secondari_macro_settore",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "match_closest_option"
+          ]
+        },
+        {
+          "key": "businesses_anno_di_costituzione",
+          "label": "Anno di costituzione",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "year",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 1800,
+            "max": 2100,
+            "precision": null,
+            "currency": null,
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.businesses_anno_di_costituzione",
+          "confidence_storage": "assets.custom_fields_confidence.businesses_anno_di_costituzione",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_integer",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "businesses_dimensione_azienda",
+          "label": "Dimensione azienda",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "select",
+          "is_required": true,
+          "completeness_score": 5,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "Microimpresa",
+              "PMI",
+              "Mid-cap",
+              "Corporate",
+              "Gruppo"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.businesses_dimensione_azienda",
+          "confidence_storage": "assets.custom_fields_confidence.businesses_dimensione_azienda",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "match_closest_option"
+          ]
+        },
+        {
+          "key": "businesses_forma_giuridica",
+          "label": "Forma giuridica",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "select",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "SRL",
+              "SPA",
+              "SAS",
+              "Altro"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.businesses_forma_giuridica",
+          "confidence_storage": "assets.custom_fields_confidence.businesses_forma_giuridica",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "match_closest_option"
+          ]
+        },
+        {
+          "key": "businesses_tipologia_operazione",
+          "label": "Tipologia operazione",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "select",
+          "is_required": true,
+          "completeness_score": 5,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "Share deal",
+              "Asset deal",
+              "Ingresso socio",
+              "Cessione ramo",
+              "Carve-out",
+              "Passaggio generazionale",
+              "Distressed"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.businesses_tipologia_operazione",
+          "confidence_storage": "assets.custom_fields_confidence.businesses_tipologia_operazione",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "match_closest_option"
+          ]
+        },
+        {
+          "key": "businesses_quota_offerta_pct",
+          "label": "Quota offerta (%)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "percentage",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": 100,
+            "precision": null,
+            "currency": null,
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.businesses_quota_offerta_pct",
+          "confidence_storage": "assets.custom_fields_confidence.businesses_quota_offerta_pct",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_decimal",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "businesses_motivazione_cessione",
+          "label": "Motivazione cessione",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "text",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": null,
+          "unit": null,
+          "storage": "assets.custom_fields.businesses_motivazione_cessione",
+          "confidence_storage": "assets.custom_fields_confidence.businesses_motivazione_cessione",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "normalize_whitespace"
+          ]
+        },
+        {
+          "key": "businesses_driver_strategici",
+          "label": "Driver strategici",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "select",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "Crescita",
+              "Ristrutturazione",
+              "Turnaround",
+              "Consolidamento",
+              "Internazionalizzazione",
+              "Diversificazione"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.businesses_driver_strategici",
+          "confidence_storage": "assets.custom_fields_confidence.businesses_driver_strategici",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "match_closest_option"
+          ]
+        },
+        {
+          "key": "businesses_numero_dipendenti",
+          "label": "Numero dipendenti",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "integer",
+          "is_required": true,
+          "completeness_score": 5,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": null,
+            "currency": null,
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.businesses_numero_dipendenti",
+          "confidence_storage": "assets.custom_fields_confidence.businesses_numero_dipendenti",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_integer",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "businesses_management_chiave_n_figure_critiche",
+          "label": "Management chiave (n. figure critiche)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "decimal",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": 2,
+            "currency": null,
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.businesses_management_chiave_n_figure_critiche",
+          "confidence_storage": "assets.custom_fields_confidence.businesses_management_chiave_n_figure_critiche",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_decimal",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "businesses_disponibilita_permanenza_management",
+          "label": "Disponibilità permanenza management",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "select",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "Sì",
+              "Parziale",
+              "No"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.businesses_disponibilita_permanenza_management",
+          "confidence_storage": "assets.custom_fields_confidence.businesses_disponibilita_permanenza_management",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "match_closest_option"
+          ]
+        },
+        {
+          "key": "businesses_costo_del_lavoro_annuo_eur",
+          "label": "Costo del lavoro annuo (€)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "currency",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": null,
+            "currency": "EUR",
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.businesses_costo_del_lavoro_annuo_eur",
+          "confidence_storage": "assets.custom_fields_confidence.businesses_costo_del_lavoro_annuo_eur",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_decimal",
+            "round_to_currency",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "businesses_modello_di_business",
+          "label": "Modello di business",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "select",
+          "is_required": true,
+          "completeness_score": 5,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "B2B",
+              "B2C",
+              "B2B2C",
+              "Contract",
+              "Ricorrente",
+              "Asset-heavy",
+              "Asset-light"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.businesses_modello_di_business",
+          "confidence_storage": "assets.custom_fields_confidence.businesses_modello_di_business",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "match_closest_option"
+          ]
+        },
+        {
+          "key": "businesses_mercato_geografico",
+          "label": "Mercato geografico",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "select",
+          "is_required": true,
+          "completeness_score": 5,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "Locale",
+              "Regionale",
+              "Nazionale",
+              "Internazionale"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.businesses_mercato_geografico",
+          "confidence_storage": "assets.custom_fields_confidence.businesses_mercato_geografico",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "match_closest_option"
+          ]
+        },
+        {
+          "key": "businesses_pct_export_su_fatturato",
+          "label": "% export su fatturato",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "percentage",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": 100,
+            "precision": null,
+            "currency": null,
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.businesses_pct_export_su_fatturato",
+          "confidence_storage": "assets.custom_fields_confidence.businesses_pct_export_su_fatturato",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_decimal",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "businesses_concentrazione_clienti_top_3_su_fatturato_pct",
+          "label": "Concentrazione clienti (top 3 su fatturato %)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "percentage",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": 100,
+            "precision": null,
+            "currency": null,
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.businesses_concentrazione_clienti_top_3_su_fatturato_pct",
+          "confidence_storage": "assets.custom_fields_confidence.businesses_concentrazione_clienti_top_3_su_fatturato_pct",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_decimal",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "businesses_contratti_ricorrenti_pct_fatturato",
+          "label": "Contratti ricorrenti (% fatturato)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "percentage",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": 100,
+            "precision": null,
+            "currency": null,
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.businesses_contratti_ricorrenti_pct_fatturato",
+          "confidence_storage": "assets.custom_fields_confidence.businesses_contratti_ricorrenti_pct_fatturato",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_decimal",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "businesses_numero_clienti_attivi",
+          "label": "Numero clienti attivi",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "integer",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": null,
+            "currency": null,
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.businesses_numero_clienti_attivi",
+          "confidence_storage": "assets.custom_fields_confidence.businesses_numero_clienti_attivi",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_integer",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "businesses_immobili_di_proprieta_si_stima_valore",
+          "label": "Immobili di proprietà (Sì / stima valore)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "decimal",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": 2,
+            "currency": null,
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.businesses_immobili_di_proprieta_si_stima_valore",
+          "confidence_storage": "assets.custom_fields_confidence.businesses_immobili_di_proprieta_si_stima_valore",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_decimal",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "businesses_impianti_macchinari_valore_eur",
+          "label": "Impianti / macchinari (valore €)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "currency",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": null,
+            "currency": "EUR",
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.businesses_impianti_macchinari_valore_eur",
+          "confidence_storage": "assets.custom_fields_confidence.businesses_impianti_macchinari_valore_eur",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_decimal",
+            "round_to_currency",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "businesses_brevetti_marchi_registrati",
+          "label": "Brevetti / marchi registrati",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "boolean",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "si",
+              "no",
+              "non dichiarato"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.businesses_brevetti_marchi_registrati",
+          "confidence_storage": "assets.custom_fields_confidence.businesses_brevetti_marchi_registrati",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "map_to_si_no"
+          ]
+        },
+        {
+          "key": "businesses_know_how_proprietario",
+          "label": "Know-how proprietario",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "boolean",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "si",
+              "no",
+              "non dichiarato"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.businesses_know_how_proprietario",
+          "confidence_storage": "assets.custom_fields_confidence.businesses_know_how_proprietario",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "map_to_si_no"
+          ]
+        },
+        {
+          "key": "businesses_certificazioni",
+          "label": "Certificazioni",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "select",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "ISO 9001",
+              "ISO 14001",
+              "ISO 45001",
+              "ISO 27001",
+              "Altre"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.businesses_certificazioni",
+          "confidence_storage": "assets.custom_fields_confidence.businesses_certificazioni",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "match_closest_option"
+          ]
+        },
+        {
+          "key": "businesses_autorizzazioni_concessioni_speciali",
+          "label": "Autorizzazioni / concessioni speciali",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "boolean",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "si",
+              "no",
+              "non dichiarato"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.businesses_autorizzazioni_concessioni_speciali",
+          "confidence_storage": "assets.custom_fields_confidence.businesses_autorizzazioni_concessioni_speciali",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "map_to_si_no"
+          ]
+        },
+        {
+          "key": "businesses_rating_esg_certificazioni_ambientali",
+          "label": "Rating ESG / certificazioni ambientali",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "text",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": null,
+          "unit": null,
+          "storage": "assets.custom_fields.businesses_rating_esg_certificazioni_ambientali",
+          "confidence_storage": "assets.custom_fields_confidence.businesses_rating_esg_certificazioni_ambientali",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "normalize_whitespace"
+          ]
+        },
+        {
+          "key": "businesses_impianto_fotovoltaico_energia_rinnovabile",
+          "label": "Impianto fotovoltaico / energia rinnovabile",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "boolean",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "si",
+              "no",
+              "non dichiarato"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.businesses_impianto_fotovoltaico_energia_rinnovabile",
+          "confidence_storage": "assets.custom_fields_confidence.businesses_impianto_fotovoltaico_energia_rinnovabile",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "map_to_si_no"
+          ]
+        },
+        {
+          "key": "businesses_bilancio_di_sostenibilita",
+          "label": "Bilancio di sostenibilità",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "boolean",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "si",
+              "no",
+              "non dichiarato"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.businesses_bilancio_di_sostenibilita",
+          "confidence_storage": "assets.custom_fields_confidence.businesses_bilancio_di_sostenibilita",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "map_to_si_no"
+          ]
+        },
+        {
+          "key": "company_retail_distribution_punti_vendita_n",
+          "label": "Punti vendita (n.)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "integer",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": null,
+            "currency": null,
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.company_retail_distribution_punti_vendita_n",
+          "confidence_storage": "assets.custom_fields_confidence.company_retail_distribution_punti_vendita_n",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_integer",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "company_retail_distribution_superficie_vendita_totale_mq",
+          "label": "Superficie vendita totale (mq)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "decimal",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": 2,
+            "currency": null,
+            "step": null
+          },
+          "unit": "mq",
+          "storage": "assets.custom_fields.company_retail_distribution_superficie_vendita_totale_mq",
+          "confidence_storage": "assets.custom_fields_confidence.company_retail_distribution_superficie_vendita_totale_mq",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_decimal",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "company_retail_distribution_punti_vendita_di_proprieta_vs_locazione",
+          "label": "Punti vendita di proprietà vs. locazione",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "decimal",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": 2,
+            "currency": null,
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.company_retail_distribution_punti_vendita_di_proprieta_vs_locazione",
+          "confidence_storage": "assets.custom_fields_confidence.company_retail_distribution_punti_vendita_di_proprieta_vs_locazione",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_decimal",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "company_retail_distribution_magazzini_centri_distribuzione_n",
+          "label": "Magazzini / centri distribuzione (n.)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "integer",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": null,
+            "currency": null,
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.company_retail_distribution_magazzini_centri_distribuzione_n",
+          "confidence_storage": "assets.custom_fields_confidence.company_retail_distribution_magazzini_centri_distribuzione_n",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_integer",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "company_retail_distribution_e_commerce_attivo",
+          "label": "E-commerce attivo",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "boolean",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "si",
+              "no",
+              "non dichiarato"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.company_retail_distribution_e_commerce_attivo",
+          "confidence_storage": "assets.custom_fields_confidence.company_retail_distribution_e_commerce_attivo",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "map_to_si_no"
+          ]
+        },
+        {
+          "key": "company_retail_distribution_pct_fatturato_online",
+          "label": "% fatturato online",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "percentage",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": 100,
+            "precision": null,
+            "currency": null,
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.company_retail_distribution_pct_fatturato_online",
+          "confidence_storage": "assets.custom_fields_confidence.company_retail_distribution_pct_fatturato_online",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_decimal",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "company_retail_distribution_valore_magazzino_medio_eur",
+          "label": "Valore magazzino medio (€)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "currency",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": null,
+            "currency": "EUR",
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.company_retail_distribution_valore_magazzino_medio_eur",
+          "confidence_storage": "assets.custom_fields_confidence.company_retail_distribution_valore_magazzino_medio_eur",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_decimal",
+            "round_to_currency",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "company_retail_distribution_fidelity_database_clienti_n",
+          "label": "Fidelity / database clienti (n.)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "integer",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": null,
+            "currency": null,
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.company_retail_distribution_fidelity_database_clienti_n",
+          "confidence_storage": "assets.custom_fields_confidence.company_retail_distribution_fidelity_database_clienti_n",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_integer",
+            "clamp_to_range"
+          ]
+        }
+      ]
+    }
+  }
+}

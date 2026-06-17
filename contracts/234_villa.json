@@ -1,0 +1,1144 @@
+{
+  "data": {
+    "schema_version": "3",
+    "generated_at": "2026-06-17T17:02:49+02:00",
+    "category": {
+      "id": 234,
+      "level": 3,
+      "name": "Villa",
+      "parent": {
+        "id": 231,
+        "level": 2,
+        "name": "Immobili residenziali di prestigio",
+        "parent": {
+          "id": 230,
+          "level": 1,
+          "name": "Immobili"
+        }
+      }
+    },
+    "fields": {
+      "native": [
+        {
+          "key": "name",
+          "label": "Denominazione",
+          "source": "standard",
+          "usage": "native",
+          "type": "text",
+          "is_required": true,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": null,
+          "unit": null,
+          "storage": "assets.name",
+          "aliases": [],
+          "transform": [
+            "trim",
+            "normalize_whitespace"
+          ]
+        },
+        {
+          "key": "geo_municipality_id",
+          "label": "Comune amministrativo",
+          "source": "native_location",
+          "usage": "native",
+          "type": "foreign_id",
+          "is_required": true,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": {
+            "target_table": "geo_municipalities",
+            "nullable": true
+          },
+          "unit": null,
+          "storage": "assets.geo_municipality_id",
+          "aliases": [],
+          "transform": [
+            "parse_integer",
+            "validate_exists_geo_municipality"
+          ]
+        },
+        {
+          "key": "country",
+          "label": "Nazione",
+          "source": "native_location",
+          "usage": "native",
+          "type": "iso_alpha2",
+          "is_required": true,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": {
+            "format": "ISO 3166-1 alpha-2"
+          },
+          "unit": null,
+          "storage": "assets.country",
+          "aliases": [],
+          "transform": [
+            "trim",
+            "uppercase",
+            "validate_iso3166_alpha2"
+          ]
+        },
+        {
+          "key": "locality",
+          "label": "Localita",
+          "source": "native_location",
+          "usage": "native",
+          "type": "text",
+          "is_required": false,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": null,
+          "unit": null,
+          "storage": "assets.locality",
+          "aliases": [],
+          "transform": [
+            "trim",
+            "normalize_whitespace"
+          ]
+        },
+        {
+          "key": "address_line",
+          "label": "Indirizzo",
+          "source": "native_location",
+          "usage": "native",
+          "type": "text",
+          "is_required": true,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": null,
+          "unit": null,
+          "storage": "assets.address_line",
+          "aliases": [],
+          "transform": [
+            "trim",
+            "normalize_whitespace"
+          ]
+        },
+        {
+          "key": "latitude",
+          "label": "Latitudine GPS",
+          "source": "native_location",
+          "usage": "native",
+          "type": "decimal_pair",
+          "is_required": false,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": {
+            "crs": "WGS84",
+            "format": "decimal_degrees",
+            "both_or_none": true
+          },
+          "unit": null,
+          "storage": "assets.latitude",
+          "aliases": [],
+          "transform": [
+            "parse_decimal_pair",
+            "validate_wgs84"
+          ]
+        },
+        {
+          "key": "longitude",
+          "label": "Longitudine GPS",
+          "source": "native_location",
+          "usage": "native",
+          "type": "decimal_pair",
+          "is_required": false,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": {
+            "crs": "WGS84",
+            "format": "decimal_degrees",
+            "both_or_none": true
+          },
+          "unit": null,
+          "storage": "assets.longitude",
+          "aliases": [],
+          "transform": [
+            "parse_decimal_pair",
+            "validate_wgs84"
+          ]
+        },
+        {
+          "key": "municipality_id",
+          "label": "ID Comune (risoluzione)",
+          "source": "native_location",
+          "usage": "native",
+          "type": "integer",
+          "is_required": false,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": {
+            "min": null,
+            "max": null,
+            "precision": null,
+            "currency": null,
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.municipality_id",
+          "aliases": [],
+          "transform": [
+            "parse_integer",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "region_string",
+          "label": "Regione (testo)",
+          "source": "native_location",
+          "usage": "native",
+          "type": "text",
+          "is_required": false,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": null,
+          "unit": null,
+          "storage": "assets.region_string",
+          "aliases": [],
+          "transform": [
+            "trim",
+            "normalize_whitespace"
+          ]
+        },
+        {
+          "key": "province_string",
+          "label": "Provincia (testo)",
+          "source": "native_location",
+          "usage": "native",
+          "type": "text",
+          "is_required": false,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": null,
+          "unit": null,
+          "storage": "assets.province_string",
+          "aliases": [],
+          "transform": [
+            "trim",
+            "normalize_whitespace"
+          ]
+        },
+        {
+          "key": "municipality_string",
+          "label": "Comune (testo)",
+          "source": "native_location",
+          "usage": "native",
+          "type": "text",
+          "is_required": false,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": null,
+          "unit": null,
+          "storage": "assets.municipality_string",
+          "aliases": [],
+          "transform": [
+            "trim",
+            "normalize_whitespace"
+          ]
+        },
+        {
+          "key": "real_estate_prezzo_richiesto_eur",
+          "label": "Prezzo richiesto (€)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "currency",
+          "is_required": true,
+          "completeness_score": 5,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": null,
+            "currency": "EUR",
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.real_estate_prezzo_richiesto_eur",
+          "confidence_storage": "assets.custom_fields_confidence.real_estate_prezzo_richiesto_eur",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_decimal",
+            "round_to_currency",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "real_estate_prezzo_trattabile_si_no",
+          "label": "Prezzo trattabile (Sì/No)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "boolean",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "si",
+              "no",
+              "non dichiarato"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.real_estate_prezzo_trattabile_si_no",
+          "confidence_storage": "assets.custom_fields_confidence.real_estate_prezzo_trattabile_si_no",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "map_to_si_no"
+          ]
+        },
+        {
+          "key": "real_estate_stato_di_occupazione",
+          "label": "Stato di occupazione",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "select",
+          "is_required": true,
+          "completeness_score": 5,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "Libero",
+              "Occupato",
+              "Locato"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.real_estate_stato_di_occupazione",
+          "confidence_storage": "assets.custom_fields_confidence.real_estate_stato_di_occupazione",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "match_closest_option"
+          ]
+        },
+        {
+          "key": "real_estate_stato_di_conservazione",
+          "label": "Stato di conservazione",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "select",
+          "is_required": true,
+          "completeness_score": 5,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "Da ristrutturare",
+              "Buono",
+              "Ottimo",
+              "Nuovo"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.real_estate_stato_di_conservazione",
+          "confidence_storage": "assets.custom_fields_confidence.real_estate_stato_di_conservazione",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "match_closest_option"
+          ]
+        },
+        {
+          "key": "real_estate_anno_di_costruzione_epoca",
+          "label": "Anno di costruzione / Epoca",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "year",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 1800,
+            "max": 2100,
+            "precision": null,
+            "currency": null,
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.real_estate_anno_di_costruzione_epoca",
+          "confidence_storage": "assets.custom_fields_confidence.real_estate_anno_di_costruzione_epoca",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_integer",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "real_estate_classe_energetica_ape",
+          "label": "Classe energetica (APE)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "select",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "A4",
+              "A3",
+              "A2",
+              "A1",
+              "B",
+              "C",
+              "D",
+              "E",
+              "F",
+              "G"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.real_estate_classe_energetica_ape",
+          "confidence_storage": "assets.custom_fields_confidence.real_estate_classe_energetica_ape",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "match_closest_option"
+          ]
+        },
+        {
+          "key": "real_estate_vincoli",
+          "label": "Vincoli",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "select",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "Urbanistico",
+              "Paesaggistico",
+              "Monumentale"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.real_estate_vincoli",
+          "confidence_storage": "assets.custom_fields_confidence.real_estate_vincoli",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "match_closest_option"
+          ]
+        },
+        {
+          "key": "real_estate_destinazione_d_uso_attuale",
+          "label": "Destinazione d’uso attuale",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "text",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": null,
+          "unit": null,
+          "storage": "assets.custom_fields.real_estate_destinazione_d_uso_attuale",
+          "confidence_storage": "assets.custom_fields_confidence.real_estate_destinazione_d_uso_attuale",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "normalize_whitespace"
+          ]
+        },
+        {
+          "key": "real_estate_destinazione_d_uso_potenziale",
+          "label": "Destinazione d’uso potenziale",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "text",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": null,
+          "unit": null,
+          "storage": "assets.custom_fields.real_estate_destinazione_d_uso_potenziale",
+          "confidence_storage": "assets.custom_fields_confidence.real_estate_destinazione_d_uso_potenziale",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "normalize_whitespace"
+          ]
+        },
+        {
+          "key": "villa_piscina",
+          "label": "Piscina",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "boolean",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "si",
+              "no",
+              "non dichiarato"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.villa_piscina",
+          "confidence_storage": "assets.custom_fields_confidence.villa_piscina",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "map_to_si_no"
+          ]
+        },
+        {
+          "key": "villa_giardino_mq",
+          "label": "Giardino (mq)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "decimal",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": 2,
+            "currency": null,
+            "step": null
+          },
+          "unit": "mq",
+          "storage": "assets.custom_fields.villa_giardino_mq",
+          "confidence_storage": "assets.custom_fields_confidence.villa_giardino_mq",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_decimal",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "villa_dependance_mq",
+          "label": "Dependance (mq)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "decimal",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": 2,
+            "currency": null,
+            "step": null
+          },
+          "unit": "mq",
+          "storage": "assets.custom_fields.villa_dependance_mq",
+          "confidence_storage": "assets.custom_fields_confidence.villa_dependance_mq",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_decimal",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "villa_garage_posto_auto_n",
+          "label": "Garage / posto auto (n.)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "integer",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": null,
+            "currency": null,
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.villa_garage_posto_auto_n",
+          "confidence_storage": "assets.custom_fields_confidence.villa_garage_posto_auto_n",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_integer",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "villa_taverna_cantina",
+          "label": "Taverna / cantina",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "boolean",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "si",
+              "no",
+              "non dichiarato"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.villa_taverna_cantina",
+          "confidence_storage": "assets.custom_fields_confidence.villa_taverna_cantina",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "map_to_si_no"
+          ]
+        },
+        {
+          "key": "villa_superficie_coperta_mq",
+          "label": "Superficie coperta (mq)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "decimal",
+          "is_required": true,
+          "completeness_score": 5,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": 2,
+            "currency": null,
+            "step": null
+          },
+          "unit": "mq",
+          "storage": "assets.custom_fields.villa_superficie_coperta_mq",
+          "confidence_storage": "assets.custom_fields_confidence.villa_superficie_coperta_mq",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_decimal",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "villa_superficie_terreno_mq",
+          "label": "Superficie terreno (mq)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "decimal",
+          "is_required": true,
+          "completeness_score": 5,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": 2,
+            "currency": null,
+            "step": null
+          },
+          "unit": "mq",
+          "storage": "assets.custom_fields.villa_superficie_terreno_mq",
+          "confidence_storage": "assets.custom_fields_confidence.villa_superficie_terreno_mq",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_decimal",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "villa_numero_camere_da_letto",
+          "label": "Numero camere da letto",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "integer",
+          "is_required": true,
+          "completeness_score": 5,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": null,
+            "currency": null,
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.villa_numero_camere_da_letto",
+          "confidence_storage": "assets.custom_fields_confidence.villa_numero_camere_da_letto",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_integer",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "villa_numero_bagni",
+          "label": "Numero bagni",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "integer",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": null,
+            "currency": null,
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.villa_numero_bagni",
+          "confidence_storage": "assets.custom_fields_confidence.villa_numero_bagni",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_integer",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "villa_numero_piani",
+          "label": "Numero piani",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "integer",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": null,
+            "currency": null,
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.villa_numero_piani",
+          "confidence_storage": "assets.custom_fields_confidence.villa_numero_piani",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_integer",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "villa_livello_finiture",
+          "label": "Livello finiture",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "select",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "Standard",
+              "Buono",
+              "Lusso"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.villa_livello_finiture",
+          "confidence_storage": "assets.custom_fields_confidence.villa_livello_finiture",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "match_closest_option"
+          ]
+        },
+        {
+          "key": "villa_domotica_smart_home",
+          "label": "Domotica / smart home",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "boolean",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "si",
+              "no",
+              "non dichiarato"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.villa_domotica_smart_home",
+          "confidence_storage": "assets.custom_fields_confidence.villa_domotica_smart_home",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "map_to_si_no"
+          ]
+        },
+        {
+          "key": "villa_impianto_riscaldamento",
+          "label": "Impianto riscaldamento",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "select",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "Pavimento",
+              "Radiatori",
+              "Aria",
+              "Pompa di calore",
+              "Misto"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.villa_impianto_riscaldamento",
+          "confidence_storage": "assets.custom_fields_confidence.villa_impianto_riscaldamento",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "match_closest_option"
+          ]
+        },
+        {
+          "key": "villa_impianto_climatizzazione",
+          "label": "Impianto climatizzazione",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "boolean",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "si",
+              "no",
+              "non dichiarato"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.villa_impianto_climatizzazione",
+          "confidence_storage": "assets.custom_fields_confidence.villa_impianto_climatizzazione",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "map_to_si_no"
+          ]
+        },
+        {
+          "key": "villa_vista",
+          "label": "Vista",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "select",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "mare",
+              "lago",
+              "montagna",
+              "collina",
+              "altro"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.villa_vista",
+          "confidence_storage": "assets.custom_fields_confidence.villa_vista",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "match_closest_option"
+          ]
+        },
+        {
+          "key": "villa_esposizione_prevalente",
+          "label": "Esposizione prevalente",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "select",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "Nord",
+              "Sud",
+              "Est",
+              "Ovest",
+              "Multipla"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.villa_esposizione_prevalente",
+          "confidence_storage": "assets.custom_fields_confidence.villa_esposizione_prevalente",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "match_closest_option"
+          ]
+        },
+        {
+          "key": "villa_privacy_isolamento",
+          "label": "Privacy / isolamento",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "select",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "Alto",
+              "Medio",
+              "Basso"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.villa_privacy_isolamento",
+          "confidence_storage": "assets.custom_fields_confidence.villa_privacy_isolamento",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "match_closest_option"
+          ]
+        }
+      ]
+    }
+  }
+}

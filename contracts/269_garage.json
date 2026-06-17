@@ -1,0 +1,998 @@
+{
+  "data": {
+    "schema_version": "3",
+    "generated_at": "2026-06-17T17:02:41+02:00",
+    "category": {
+      "id": 269,
+      "level": 3,
+      "name": "Autorimessa",
+      "parent": {
+        "id": 256,
+        "level": 2,
+        "name": "Destinazioni specialistiche",
+        "parent": {
+          "id": 230,
+          "level": 1,
+          "name": "Immobili"
+        }
+      }
+    },
+    "fields": {
+      "native": [
+        {
+          "key": "name",
+          "label": "Denominazione",
+          "source": "standard",
+          "usage": "native",
+          "type": "text",
+          "is_required": true,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": null,
+          "unit": null,
+          "storage": "assets.name",
+          "aliases": [],
+          "transform": [
+            "trim",
+            "normalize_whitespace"
+          ]
+        },
+        {
+          "key": "geo_municipality_id",
+          "label": "Comune amministrativo",
+          "source": "native_location",
+          "usage": "native",
+          "type": "foreign_id",
+          "is_required": true,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": {
+            "target_table": "geo_municipalities",
+            "nullable": true
+          },
+          "unit": null,
+          "storage": "assets.geo_municipality_id",
+          "aliases": [],
+          "transform": [
+            "parse_integer",
+            "validate_exists_geo_municipality"
+          ]
+        },
+        {
+          "key": "country",
+          "label": "Nazione",
+          "source": "native_location",
+          "usage": "native",
+          "type": "iso_alpha2",
+          "is_required": true,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": {
+            "format": "ISO 3166-1 alpha-2"
+          },
+          "unit": null,
+          "storage": "assets.country",
+          "aliases": [],
+          "transform": [
+            "trim",
+            "uppercase",
+            "validate_iso3166_alpha2"
+          ]
+        },
+        {
+          "key": "locality",
+          "label": "Localita",
+          "source": "native_location",
+          "usage": "native",
+          "type": "text",
+          "is_required": false,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": null,
+          "unit": null,
+          "storage": "assets.locality",
+          "aliases": [],
+          "transform": [
+            "trim",
+            "normalize_whitespace"
+          ]
+        },
+        {
+          "key": "address_line",
+          "label": "Indirizzo",
+          "source": "native_location",
+          "usage": "native",
+          "type": "text",
+          "is_required": true,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": null,
+          "unit": null,
+          "storage": "assets.address_line",
+          "aliases": [],
+          "transform": [
+            "trim",
+            "normalize_whitespace"
+          ]
+        },
+        {
+          "key": "latitude",
+          "label": "Latitudine GPS",
+          "source": "native_location",
+          "usage": "native",
+          "type": "decimal_pair",
+          "is_required": false,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": {
+            "crs": "WGS84",
+            "format": "decimal_degrees",
+            "both_or_none": true
+          },
+          "unit": null,
+          "storage": "assets.latitude",
+          "aliases": [],
+          "transform": [
+            "parse_decimal_pair",
+            "validate_wgs84"
+          ]
+        },
+        {
+          "key": "longitude",
+          "label": "Longitudine GPS",
+          "source": "native_location",
+          "usage": "native",
+          "type": "decimal_pair",
+          "is_required": false,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": {
+            "crs": "WGS84",
+            "format": "decimal_degrees",
+            "both_or_none": true
+          },
+          "unit": null,
+          "storage": "assets.longitude",
+          "aliases": [],
+          "transform": [
+            "parse_decimal_pair",
+            "validate_wgs84"
+          ]
+        },
+        {
+          "key": "municipality_id",
+          "label": "ID Comune (risoluzione)",
+          "source": "native_location",
+          "usage": "native",
+          "type": "integer",
+          "is_required": false,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": {
+            "min": null,
+            "max": null,
+            "precision": null,
+            "currency": null,
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.municipality_id",
+          "aliases": [],
+          "transform": [
+            "parse_integer",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "region_string",
+          "label": "Regione (testo)",
+          "source": "native_location",
+          "usage": "native",
+          "type": "text",
+          "is_required": false,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": null,
+          "unit": null,
+          "storage": "assets.region_string",
+          "aliases": [],
+          "transform": [
+            "trim",
+            "normalize_whitespace"
+          ]
+        },
+        {
+          "key": "province_string",
+          "label": "Provincia (testo)",
+          "source": "native_location",
+          "usage": "native",
+          "type": "text",
+          "is_required": false,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": null,
+          "unit": null,
+          "storage": "assets.province_string",
+          "aliases": [],
+          "transform": [
+            "trim",
+            "normalize_whitespace"
+          ]
+        },
+        {
+          "key": "municipality_string",
+          "label": "Comune (testo)",
+          "source": "native_location",
+          "usage": "native",
+          "type": "text",
+          "is_required": false,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": null,
+          "unit": null,
+          "storage": "assets.municipality_string",
+          "aliases": [],
+          "transform": [
+            "trim",
+            "normalize_whitespace"
+          ]
+        },
+        {
+          "key": "real_estate_prezzo_richiesto_eur",
+          "label": "Prezzo richiesto (€)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "currency",
+          "is_required": true,
+          "completeness_score": 5,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": null,
+            "currency": "EUR",
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.real_estate_prezzo_richiesto_eur",
+          "confidence_storage": "assets.custom_fields_confidence.real_estate_prezzo_richiesto_eur",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_decimal",
+            "round_to_currency",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "real_estate_prezzo_trattabile_si_no",
+          "label": "Prezzo trattabile (Sì/No)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "boolean",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "si",
+              "no",
+              "non dichiarato"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.real_estate_prezzo_trattabile_si_no",
+          "confidence_storage": "assets.custom_fields_confidence.real_estate_prezzo_trattabile_si_no",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "map_to_si_no"
+          ]
+        },
+        {
+          "key": "real_estate_stato_di_occupazione",
+          "label": "Stato di occupazione",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "select",
+          "is_required": true,
+          "completeness_score": 5,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "Libero",
+              "Occupato",
+              "Locato"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.real_estate_stato_di_occupazione",
+          "confidence_storage": "assets.custom_fields_confidence.real_estate_stato_di_occupazione",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "match_closest_option"
+          ]
+        },
+        {
+          "key": "real_estate_stato_di_conservazione",
+          "label": "Stato di conservazione",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "select",
+          "is_required": true,
+          "completeness_score": 5,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "Da ristrutturare",
+              "Buono",
+              "Ottimo",
+              "Nuovo"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.real_estate_stato_di_conservazione",
+          "confidence_storage": "assets.custom_fields_confidence.real_estate_stato_di_conservazione",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "match_closest_option"
+          ]
+        },
+        {
+          "key": "real_estate_anno_di_costruzione_epoca",
+          "label": "Anno di costruzione / Epoca",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "year",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 1800,
+            "max": 2100,
+            "precision": null,
+            "currency": null,
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.real_estate_anno_di_costruzione_epoca",
+          "confidence_storage": "assets.custom_fields_confidence.real_estate_anno_di_costruzione_epoca",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_integer",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "real_estate_classe_energetica_ape",
+          "label": "Classe energetica (APE)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "select",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "A4",
+              "A3",
+              "A2",
+              "A1",
+              "B",
+              "C",
+              "D",
+              "E",
+              "F",
+              "G"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.real_estate_classe_energetica_ape",
+          "confidence_storage": "assets.custom_fields_confidence.real_estate_classe_energetica_ape",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "match_closest_option"
+          ]
+        },
+        {
+          "key": "real_estate_vincoli",
+          "label": "Vincoli",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "select",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "Urbanistico",
+              "Paesaggistico",
+              "Monumentale"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.real_estate_vincoli",
+          "confidence_storage": "assets.custom_fields_confidence.real_estate_vincoli",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "match_closest_option"
+          ]
+        },
+        {
+          "key": "real_estate_destinazione_d_uso_attuale",
+          "label": "Destinazione d’uso attuale",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "text",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": null,
+          "unit": null,
+          "storage": "assets.custom_fields.real_estate_destinazione_d_uso_attuale",
+          "confidence_storage": "assets.custom_fields_confidence.real_estate_destinazione_d_uso_attuale",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "normalize_whitespace"
+          ]
+        },
+        {
+          "key": "real_estate_destinazione_d_uso_potenziale",
+          "label": "Destinazione d’uso potenziale",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "text",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": null,
+          "unit": null,
+          "storage": "assets.custom_fields.real_estate_destinazione_d_uso_potenziale",
+          "confidence_storage": "assets.custom_fields_confidence.real_estate_destinazione_d_uso_potenziale",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "normalize_whitespace"
+          ]
+        },
+        {
+          "key": "garage_numero_posti_auto",
+          "label": "Numero posti auto",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "integer",
+          "is_required": true,
+          "completeness_score": 5,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": null,
+            "currency": null,
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.garage_numero_posti_auto",
+          "confidence_storage": "assets.custom_fields_confidence.garage_numero_posti_auto",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_integer",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "garage_superficie_complessiva_mq",
+          "label": "Superficie complessiva (mq)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "decimal",
+          "is_required": true,
+          "completeness_score": 5,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": 2,
+            "currency": null,
+            "step": null
+          },
+          "unit": "mq",
+          "storage": "assets.custom_fields.garage_superficie_complessiva_mq",
+          "confidence_storage": "assets.custom_fields_confidence.garage_superficie_complessiva_mq",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_decimal",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "garage_numero_piani",
+          "label": "Numero piani",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "integer",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": null,
+            "currency": null,
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.garage_numero_piani",
+          "confidence_storage": "assets.custom_fields_confidence.garage_numero_piani",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_integer",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "garage_reddito_annuo_eur",
+          "label": "Reddito annuo (€)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "currency",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": null,
+            "currency": "EUR",
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.garage_reddito_annuo_eur",
+          "confidence_storage": "assets.custom_fields_confidence.garage_reddito_annuo_eur",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_decimal",
+            "round_to_currency",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "garage_occupancy_rate_pct",
+          "label": "Occupancy rate (%)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "percentage",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": 100,
+            "precision": null,
+            "currency": null,
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.garage_occupancy_rate_pct",
+          "confidence_storage": "assets.custom_fields_confidence.garage_occupancy_rate_pct",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_decimal",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "garage_tariffa_media_oraria_mensile_eur",
+          "label": "Tariffa media oraria/mensile (€)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "currency",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": null,
+            "currency": "EUR",
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.garage_tariffa_media_oraria_mensile_eur",
+          "confidence_storage": "assets.custom_fields_confidence.garage_tariffa_media_oraria_mensile_eur",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_decimal",
+            "round_to_currency",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "garage_altezza_utile_m",
+          "label": "Altezza utile (m)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "decimal",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": 2,
+            "currency": null,
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.garage_altezza_utile_m",
+          "confidence_storage": "assets.custom_fields_confidence.garage_altezza_utile_m",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_decimal",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "garage_rampe_accessi_veicoli",
+          "label": "Rampe / accessi veicoli",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "decimal",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": 2,
+            "currency": null,
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.garage_rampe_accessi_veicoli",
+          "confidence_storage": "assets.custom_fields_confidence.garage_rampe_accessi_veicoli",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_decimal",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "garage_posti_moto_bici",
+          "label": "Posti moto / bici",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "integer",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": null,
+            "currency": null,
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.garage_posti_moto_bici",
+          "confidence_storage": "assets.custom_fields_confidence.garage_posti_moto_bici",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_integer",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "garage_colonnine_ricarica_elettrica_n",
+          "label": "Colonnine ricarica elettrica (n.)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "integer",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": null,
+            "currency": null,
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.garage_colonnine_ricarica_elettrica_n",
+          "confidence_storage": "assets.custom_fields_confidence.garage_colonnine_ricarica_elettrica_n",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_integer",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "garage_impianto_antincendio",
+          "label": "Impianto antincendio",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "boolean",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "si",
+              "no",
+              "non dichiarato"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.garage_impianto_antincendio",
+          "confidence_storage": "assets.custom_fields_confidence.garage_impianto_antincendio",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "map_to_si_no"
+          ]
+        },
+        {
+          "key": "garage_videosorveglianza_vigilanza",
+          "label": "Videosorveglianza / vigilanza",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "boolean",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "si",
+              "no",
+              "non dichiarato"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.garage_videosorveglianza_vigilanza",
+          "confidence_storage": "assets.custom_fields_confidence.garage_videosorveglianza_vigilanza",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "map_to_si_no"
+          ]
+        },
+        {
+          "key": "garage_autolavaggio",
+          "label": "Autolavaggio",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "boolean",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "si",
+              "no",
+              "non dichiarato"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.garage_autolavaggio",
+          "confidence_storage": "assets.custom_fields_confidence.garage_autolavaggio",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "map_to_si_no"
+          ]
+        }
+      ]
+    }
+  }
+}

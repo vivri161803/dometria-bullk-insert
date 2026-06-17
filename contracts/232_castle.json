@@ -1,0 +1,1329 @@
+{
+  "data": {
+    "schema_version": "3",
+    "generated_at": "2026-06-17T17:02:49+02:00",
+    "category": {
+      "id": 232,
+      "level": 3,
+      "name": "Castello",
+      "parent": {
+        "id": 231,
+        "level": 2,
+        "name": "Immobili residenziali di prestigio",
+        "parent": {
+          "id": 230,
+          "level": 1,
+          "name": "Immobili"
+        }
+      }
+    },
+    "fields": {
+      "native": [
+        {
+          "key": "name",
+          "label": "Denominazione",
+          "source": "standard",
+          "usage": "native",
+          "type": "text",
+          "is_required": true,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": null,
+          "unit": null,
+          "storage": "assets.name",
+          "aliases": [],
+          "transform": [
+            "trim",
+            "normalize_whitespace"
+          ]
+        },
+        {
+          "key": "geo_municipality_id",
+          "label": "Comune amministrativo",
+          "source": "native_location",
+          "usage": "native",
+          "type": "foreign_id",
+          "is_required": true,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": {
+            "target_table": "geo_municipalities",
+            "nullable": true
+          },
+          "unit": null,
+          "storage": "assets.geo_municipality_id",
+          "aliases": [],
+          "transform": [
+            "parse_integer",
+            "validate_exists_geo_municipality"
+          ]
+        },
+        {
+          "key": "country",
+          "label": "Nazione",
+          "source": "native_location",
+          "usage": "native",
+          "type": "iso_alpha2",
+          "is_required": true,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": {
+            "format": "ISO 3166-1 alpha-2"
+          },
+          "unit": null,
+          "storage": "assets.country",
+          "aliases": [],
+          "transform": [
+            "trim",
+            "uppercase",
+            "validate_iso3166_alpha2"
+          ]
+        },
+        {
+          "key": "locality",
+          "label": "Localita",
+          "source": "native_location",
+          "usage": "native",
+          "type": "text",
+          "is_required": false,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": null,
+          "unit": null,
+          "storage": "assets.locality",
+          "aliases": [],
+          "transform": [
+            "trim",
+            "normalize_whitespace"
+          ]
+        },
+        {
+          "key": "address_line",
+          "label": "Indirizzo",
+          "source": "native_location",
+          "usage": "native",
+          "type": "text",
+          "is_required": true,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": null,
+          "unit": null,
+          "storage": "assets.address_line",
+          "aliases": [],
+          "transform": [
+            "trim",
+            "normalize_whitespace"
+          ]
+        },
+        {
+          "key": "latitude",
+          "label": "Latitudine GPS",
+          "source": "native_location",
+          "usage": "native",
+          "type": "decimal_pair",
+          "is_required": false,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": {
+            "crs": "WGS84",
+            "format": "decimal_degrees",
+            "both_or_none": true
+          },
+          "unit": null,
+          "storage": "assets.latitude",
+          "aliases": [],
+          "transform": [
+            "parse_decimal_pair",
+            "validate_wgs84"
+          ]
+        },
+        {
+          "key": "longitude",
+          "label": "Longitudine GPS",
+          "source": "native_location",
+          "usage": "native",
+          "type": "decimal_pair",
+          "is_required": false,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": {
+            "crs": "WGS84",
+            "format": "decimal_degrees",
+            "both_or_none": true
+          },
+          "unit": null,
+          "storage": "assets.longitude",
+          "aliases": [],
+          "transform": [
+            "parse_decimal_pair",
+            "validate_wgs84"
+          ]
+        },
+        {
+          "key": "municipality_id",
+          "label": "ID Comune (risoluzione)",
+          "source": "native_location",
+          "usage": "native",
+          "type": "integer",
+          "is_required": false,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": {
+            "min": null,
+            "max": null,
+            "precision": null,
+            "currency": null,
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.municipality_id",
+          "aliases": [],
+          "transform": [
+            "parse_integer",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "region_string",
+          "label": "Regione (testo)",
+          "source": "native_location",
+          "usage": "native",
+          "type": "text",
+          "is_required": false,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": null,
+          "unit": null,
+          "storage": "assets.region_string",
+          "aliases": [],
+          "transform": [
+            "trim",
+            "normalize_whitespace"
+          ]
+        },
+        {
+          "key": "province_string",
+          "label": "Provincia (testo)",
+          "source": "native_location",
+          "usage": "native",
+          "type": "text",
+          "is_required": false,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": null,
+          "unit": null,
+          "storage": "assets.province_string",
+          "aliases": [],
+          "transform": [
+            "trim",
+            "normalize_whitespace"
+          ]
+        },
+        {
+          "key": "municipality_string",
+          "label": "Comune (testo)",
+          "source": "native_location",
+          "usage": "native",
+          "type": "text",
+          "is_required": false,
+          "completeness_score": null,
+          "blind_visibility_mode": null,
+          "constraints": null,
+          "unit": null,
+          "storage": "assets.municipality_string",
+          "aliases": [],
+          "transform": [
+            "trim",
+            "normalize_whitespace"
+          ]
+        },
+        {
+          "key": "real_estate_prezzo_richiesto_eur",
+          "label": "Prezzo richiesto (€)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "currency",
+          "is_required": true,
+          "completeness_score": 5,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": null,
+            "currency": "EUR",
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.real_estate_prezzo_richiesto_eur",
+          "confidence_storage": "assets.custom_fields_confidence.real_estate_prezzo_richiesto_eur",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_decimal",
+            "round_to_currency",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "real_estate_prezzo_trattabile_si_no",
+          "label": "Prezzo trattabile (Sì/No)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "boolean",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "si",
+              "no",
+              "non dichiarato"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.real_estate_prezzo_trattabile_si_no",
+          "confidence_storage": "assets.custom_fields_confidence.real_estate_prezzo_trattabile_si_no",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "map_to_si_no"
+          ]
+        },
+        {
+          "key": "real_estate_stato_di_occupazione",
+          "label": "Stato di occupazione",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "select",
+          "is_required": true,
+          "completeness_score": 5,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "Libero",
+              "Occupato",
+              "Locato"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.real_estate_stato_di_occupazione",
+          "confidence_storage": "assets.custom_fields_confidence.real_estate_stato_di_occupazione",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "match_closest_option"
+          ]
+        },
+        {
+          "key": "real_estate_stato_di_conservazione",
+          "label": "Stato di conservazione",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "select",
+          "is_required": true,
+          "completeness_score": 5,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "Da ristrutturare",
+              "Buono",
+              "Ottimo",
+              "Nuovo"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.real_estate_stato_di_conservazione",
+          "confidence_storage": "assets.custom_fields_confidence.real_estate_stato_di_conservazione",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "match_closest_option"
+          ]
+        },
+        {
+          "key": "real_estate_anno_di_costruzione_epoca",
+          "label": "Anno di costruzione / Epoca",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "year",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 1800,
+            "max": 2100,
+            "precision": null,
+            "currency": null,
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.real_estate_anno_di_costruzione_epoca",
+          "confidence_storage": "assets.custom_fields_confidence.real_estate_anno_di_costruzione_epoca",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_integer",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "real_estate_classe_energetica_ape",
+          "label": "Classe energetica (APE)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "select",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "A4",
+              "A3",
+              "A2",
+              "A1",
+              "B",
+              "C",
+              "D",
+              "E",
+              "F",
+              "G"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.real_estate_classe_energetica_ape",
+          "confidence_storage": "assets.custom_fields_confidence.real_estate_classe_energetica_ape",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "match_closest_option"
+          ]
+        },
+        {
+          "key": "real_estate_vincoli",
+          "label": "Vincoli",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "select",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "Urbanistico",
+              "Paesaggistico",
+              "Monumentale"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.real_estate_vincoli",
+          "confidence_storage": "assets.custom_fields_confidence.real_estate_vincoli",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "match_closest_option"
+          ]
+        },
+        {
+          "key": "real_estate_destinazione_d_uso_attuale",
+          "label": "Destinazione d’uso attuale",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "text",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": null,
+          "unit": null,
+          "storage": "assets.custom_fields.real_estate_destinazione_d_uso_attuale",
+          "confidence_storage": "assets.custom_fields_confidence.real_estate_destinazione_d_uso_attuale",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "normalize_whitespace"
+          ]
+        },
+        {
+          "key": "real_estate_destinazione_d_uso_potenziale",
+          "label": "Destinazione d’uso potenziale",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "text",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": null,
+          "unit": null,
+          "storage": "assets.custom_fields.real_estate_destinazione_d_uso_potenziale",
+          "confidence_storage": "assets.custom_fields_confidence.real_estate_destinazione_d_uso_potenziale",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "normalize_whitespace"
+          ]
+        },
+        {
+          "key": "castle_superficie_coperta_totale_mq",
+          "label": "Superficie coperta totale (mq)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "decimal",
+          "is_required": true,
+          "completeness_score": 5,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": 2,
+            "currency": null,
+            "step": null
+          },
+          "unit": "mq",
+          "storage": "assets.custom_fields.castle_superficie_coperta_totale_mq",
+          "confidence_storage": "assets.custom_fields_confidence.castle_superficie_coperta_totale_mq",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_decimal",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "castle_superficie_terreno_parco_ha",
+          "label": "Superficie terreno / parco (ha)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "decimal",
+          "is_required": true,
+          "completeness_score": 5,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": 2,
+            "currency": null,
+            "step": null
+          },
+          "unit": "ha",
+          "storage": "assets.custom_fields.castle_superficie_terreno_parco_ha",
+          "confidence_storage": "assets.custom_fields_confidence.castle_superficie_terreno_parco_ha",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_decimal",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "castle_numero_piani_fuori_terra",
+          "label": "Numero piani fuori terra",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "integer",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": null,
+            "currency": null,
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.castle_numero_piani_fuori_terra",
+          "confidence_storage": "assets.custom_fields_confidence.castle_numero_piani_fuori_terra",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_integer",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "castle_numero_piani_interrati",
+          "label": "Numero piani interrati",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "integer",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": null,
+            "currency": null,
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.castle_numero_piani_interrati",
+          "confidence_storage": "assets.custom_fields_confidence.castle_numero_piani_interrati",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_integer",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "castle_numero_camere_vani",
+          "label": "Numero camere / vani",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "integer",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": null,
+            "currency": null,
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.castle_numero_camere_vani",
+          "confidence_storage": "assets.custom_fields_confidence.castle_numero_camere_vani",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_integer",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "castle_numero_bagni",
+          "label": "Numero bagni",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "integer",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": null,
+            "currency": null,
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.castle_numero_bagni",
+          "confidence_storage": "assets.custom_fields_confidence.castle_numero_bagni",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_integer",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "castle_numero_unita_immobiliari_autonome",
+          "label": "Numero unità immobiliari autonome",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "integer",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": null,
+            "currency": null,
+            "step": null
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.castle_numero_unita_immobiliari_autonome",
+          "confidence_storage": "assets.custom_fields_confidence.castle_numero_unita_immobiliari_autonome",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_integer",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "castle_epoca_storica_di_riferimento",
+          "label": "Epoca storica di riferimento",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "text",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": null,
+          "unit": null,
+          "storage": "assets.custom_fields.castle_epoca_storica_di_riferimento",
+          "confidence_storage": "assets.custom_fields_confidence.castle_epoca_storica_di_riferimento",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "normalize_whitespace"
+          ]
+        },
+        {
+          "key": "castle_vincolo_monumentale_d_lgs_42_2004",
+          "label": "Vincolo monumentale (D.Lgs. 42/2004)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "boolean",
+          "is_required": true,
+          "completeness_score": 5,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "si",
+              "no",
+              "non dichiarato"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.castle_vincolo_monumentale_d_lgs_42_2004",
+          "confidence_storage": "assets.custom_fields_confidence.castle_vincolo_monumentale_d_lgs_42_2004",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "map_to_si_no"
+          ]
+        },
+        {
+          "key": "castle_torre_torrione",
+          "label": "Torre / torrione",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "boolean",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "si",
+              "no",
+              "non dichiarato"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.castle_torre_torrione",
+          "confidence_storage": "assets.custom_fields_confidence.castle_torre_torrione",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "map_to_si_no"
+          ]
+        },
+        {
+          "key": "castle_mura_di_cinta_fortificazioni",
+          "label": "Mura di cinta / fortificazioni",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "boolean",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "si",
+              "no",
+              "non dichiarato"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.castle_mura_di_cinta_fortificazioni",
+          "confidence_storage": "assets.custom_fields_confidence.castle_mura_di_cinta_fortificazioni",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "map_to_si_no"
+          ]
+        },
+        {
+          "key": "castle_cappella_chiesa",
+          "label": "Cappella / chiesa",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "boolean",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "si",
+              "no",
+              "non dichiarato"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.castle_cappella_chiesa",
+          "confidence_storage": "assets.custom_fields_confidence.castle_cappella_chiesa",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "map_to_si_no"
+          ]
+        },
+        {
+          "key": "castle_affreschi_decorazioni_di_pregio",
+          "label": "Affreschi / decorazioni di pregio",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "boolean",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "si",
+              "no",
+              "non dichiarato"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.castle_affreschi_decorazioni_di_pregio",
+          "confidence_storage": "assets.custom_fields_confidence.castle_affreschi_decorazioni_di_pregio",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "map_to_si_no"
+          ]
+        },
+        {
+          "key": "castle_parco_giardino_storico_ha",
+          "label": "Parco / giardino storico (ha)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "decimal",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": 2,
+            "currency": null,
+            "step": null
+          },
+          "unit": "ha",
+          "storage": "assets.custom_fields.castle_parco_giardino_storico_ha",
+          "confidence_storage": "assets.custom_fields_confidence.castle_parco_giardino_storico_ha",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_decimal",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "castle_dipendenze_annessi_mq",
+          "label": "Dipendenze / annessi (mq)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "decimal",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": 2,
+            "currency": null,
+            "step": null
+          },
+          "unit": "mq",
+          "storage": "assets.custom_fields.castle_dipendenze_annessi_mq",
+          "confidence_storage": "assets.custom_fields_confidence.castle_dipendenze_annessi_mq",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_decimal",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "castle_piscina",
+          "label": "Piscina",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "boolean",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "si",
+              "no",
+              "non dichiarato"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.castle_piscina",
+          "confidence_storage": "assets.custom_fields_confidence.castle_piscina",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "map_to_si_no"
+          ]
+        },
+        {
+          "key": "castle_terreno_agricolo_annesso_ha",
+          "label": "Terreno agricolo annesso (ha)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "decimal",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": 2,
+            "currency": null,
+            "step": null
+          },
+          "unit": "ha",
+          "storage": "assets.custom_fields.castle_terreno_agricolo_annesso_ha",
+          "confidence_storage": "assets.custom_fields_confidence.castle_terreno_agricolo_annesso_ha",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_decimal",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "castle_distanza_da_centro_abitato_km",
+          "label": "Distanza da centro abitato (km)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "decimal",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": 2,
+            "currency": null,
+            "step": null
+          },
+          "unit": "km",
+          "storage": "assets.custom_fields.castle_distanza_da_centro_abitato_km",
+          "confidence_storage": "assets.custom_fields_confidence.castle_distanza_da_centro_abitato_km",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_decimal",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "castle_accesso_stradale",
+          "label": "Accesso stradale",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "select",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "asfaltato",
+              "sterrato"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.castle_accesso_stradale",
+          "confidence_storage": "assets.custom_fields_confidence.castle_accesso_stradale",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "match_closest_option"
+          ]
+        },
+        {
+          "key": "castle_distanza_da_aeroporto_km",
+          "label": "Distanza da aeroporto (km)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "decimal",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "range",
+          "constraints": {
+            "min": 0,
+            "max": null,
+            "precision": 2,
+            "currency": null,
+            "step": null
+          },
+          "unit": "km",
+          "storage": "assets.custom_fields.castle_distanza_da_aeroporto_km",
+          "confidence_storage": "assets.custom_fields_confidence.castle_distanza_da_aeroporto_km",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "parse_decimal",
+            "clamp_to_range"
+          ]
+        },
+        {
+          "key": "castle_idoneita_hospitality_ricettiva",
+          "label": "Idoneità hospitality / ricettiva",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "boolean",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "si",
+              "no",
+              "non dichiarato"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.castle_idoneita_hospitality_ricettiva",
+          "confidence_storage": "assets.custom_fields_confidence.castle_idoneita_hospitality_ricettiva",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "map_to_si_no"
+          ]
+        },
+        {
+          "key": "castle_idoneita_eventi_cerimonie",
+          "label": "Idoneità eventi / cerimonie",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "boolean",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": {
+            "options": [
+              "si",
+              "no",
+              "non dichiarato"
+            ]
+          },
+          "unit": null,
+          "storage": "assets.custom_fields.castle_idoneita_eventi_cerimonie",
+          "confidence_storage": "assets.custom_fields_confidence.castle_idoneita_eventi_cerimonie",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "lowercase",
+            "map_to_si_no"
+          ]
+        },
+        {
+          "key": "castle_restauri_recenti_si_no_descrizione",
+          "label": "Restauri recenti (Sì/No + descrizione)",
+          "source": "custom_fields",
+          "usage": "native",
+          "type": "text",
+          "is_required": false,
+          "completeness_score": 1,
+          "blind_visibility_mode": "visible",
+          "constraints": null,
+          "unit": null,
+          "storage": "assets.custom_fields.castle_restauri_recenti_si_no_descrizione",
+          "confidence_storage": "assets.custom_fields_confidence.castle_restauri_recenti_si_no_descrizione",
+          "confidence_constraints": {
+            "allowed_values": [
+              "high",
+              "medium",
+              "low"
+            ],
+            "nullable": true,
+            "requires_non_empty_value": true
+          },
+          "aliases": [],
+          "transform": [
+            "trim",
+            "normalize_whitespace"
+          ]
+        }
+      ]
+    }
+  }
+}

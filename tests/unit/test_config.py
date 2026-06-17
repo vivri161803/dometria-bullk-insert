@@ -89,3 +89,34 @@ class TestSettingsSingleton:
         from bulk_insert.config import settings
 
         assert isinstance(settings, Settings)
+
+
+class TestBlock2Settings:
+    """Tests for Block 2 (Contract Determination) settings."""
+
+    def test_default_embedding_model(self) -> None:
+        s = Settings()
+        assert s.EMBEDDING_MODEL == "paraphrase-multilingual-MiniLM-L12-v2"
+
+    def test_default_contract_min_score(self) -> None:
+        s = Settings()
+        assert s.CONTRACT_MIN_SCORE == 5
+
+    def test_default_contract_top_k(self) -> None:
+        s = Settings()
+        assert s.CONTRACT_TOP_K == 5
+
+    def test_embedding_model_from_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
+        s = Settings()
+        assert s.EMBEDDING_MODEL == "all-MiniLM-L6-v2"
+
+    def test_contract_min_score_from_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("CONTRACT_MIN_SCORE", "3")
+        s = Settings()
+        assert s.CONTRACT_MIN_SCORE == 3
+
+    def test_contract_top_k_from_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("CONTRACT_TOP_K", "10")
+        s = Settings()
+        assert s.CONTRACT_TOP_K == 10

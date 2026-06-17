@@ -1,8 +1,20 @@
 """Pydantic data models for the Bulk Insert pipeline."""
 
 from bulk_insert.models.asset import Asset
+from bulk_insert.models.categories import (
+    CATEGORY_ANCESTRY,
+    CATEGORY_NAMES,
+    CATEGORY_TREE,
+    LEVEL_1_CODES,
+    LEVEL_2_CODES,
+    LEVEL_3_CODES,
+    Level1Category,
+    Level1Literal,
+    get_candidate_labels,
+    get_candidate_paths,
+)
 from bulk_insert.models.chunk import Chunk, ChunkAnalysis, ChunkScore
-from bulk_insert.models.contract import Contract
+from bulk_insert.models.contract import Contract, Level1Prediction
 from bulk_insert.models.job import Job, JobStatus
 
 __all__ = [
@@ -13,4 +25,15 @@ __all__ = [
     "Contract",
     "Job",
     "JobStatus",
+    "Level1Category",
+    "Level1Literal",
+    "Level1Prediction",
+    "CATEGORY_NAMES",
+    "CATEGORY_TREE",
+    "CATEGORY_ANCESTRY",
+    "LEVEL_1_CODES",
+    "LEVEL_2_CODES",
+    "LEVEL_3_CODES",
+    "get_candidate_paths",
+    "get_candidate_labels",
 ]

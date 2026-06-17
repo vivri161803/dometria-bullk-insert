@@ -23,8 +23,11 @@
 
 | Component | Choice | Rationale |
 |---|---|---|
-| Chunking & coreference | **spaCy** (with `coreferee` or `spacy-experimental` coreference) | Production-grade NLP; handles tokenization, sentence segmentation, chunking, and coreference resolution in a single pipeline. |
-| Embeddings (cosine similarity) | **sentence-transformers** | Fast local embeddings for chunk-to-schema cosine similarity in Block 2. |
+| Sentence segmentation | **spaCy** (blank pipeline + sentencizer) | Lightweight, no model download required. Only used for sentence boundary detection; all semantic processing is delegated to LLMs. |
+| Coreference resolution | **LLM-based** (combined with scoring) | Performed during the Block 1 scoring call — the LLM both rates chunk relevance and rewrites the text with pronouns resolved. Eliminates the need for a separate NLP coreference library (e.g. `coreferee`, which lacks Python 3.13 / spaCy 3.8 support). |
+| Embeddings (contract determination) | **sentence-transformers** (`paraphrase-multilingual-MiniLM-L12-v2`) | Multilingual 384d model for cosine similarity between chunk texts and Italian category labels in Block 2. Loaded lazily via `@lru_cache`, fast enough for real-time inference on ~20 candidates. |
+
+> **Removed dependency:** The original architecture proposed a knowledge graph (KG) engine for "graph matching" of category levels 2 and 3. This was replaced by direct dictionary traversal of the `CATEGORY_TREE` (a 3-level nested dict with 3 roots, 12 level-2 nodes, and 97 level-3 leaves). The tree structure is too simple to justify a graph engine — a simple `dict[lv1][lv2] → list[lv3]` lookup achieves the same result with zero external dependencies.
 
 ---
 
@@ -100,6 +103,7 @@
 
 ```
 bulk_insert/
+├── contracts/              # 97 JSON contract files ({id}_{lv3_code}.json)
 ├── specs/                  # ← You are here
 │   ├── mission.md
 │   ├── tech-stack.md

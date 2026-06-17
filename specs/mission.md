@@ -22,9 +22,9 @@ A synchronous API would block under load. This service decouples ingestion from 
 
 | Capability | Description |
 |---|---|
-| **Chunking & Scoring** | Split raw text into semantically meaningful, overlapping chunks via spaCy; resolve coreferences; score each chunk's relevance using a lightweight LLM. |
-| **Contract Determination** | Derive the target JSON schema ("contract") using a hybrid Rule-Based + RAG approach: LLM extracts level-1 fields, graph matching deduces levels 2–3, cosine similarity + weighted majority voting selects the final schema. |
-| **Asset Extraction** | Populate the contract with extracted data by passing scored chunks + empty contract to a high-capacity LLM (GPT-4o), enforcing Pydantic schemas via Instructor. |
+| **Chunking & Scoring** | Split raw text into semantically meaningful, overlapping chunks via spaCy; resolve coreferences and score each chunk's relevance in a single lightweight LLM call (GPT-4o-mini). |
+| **Contract Determination** | Derive the target contract category path (`lv1/lv2/lv3`) using a two-stage hybrid approach: (1) a constrained LLM call classifies the document into one of 3 level-1 macro-categories, then (2) cosine similarity between chunk embeddings and candidate category labels — weighted by each chunk's relevance score — selects the winning `(lv2, lv3)` pair via majority vote. No knowledge graph is used; the category hierarchy is a simple 3-level tree traversed via dictionary lookup. |
+| **Asset Extraction** | Load the JSON contract schema matching the category path determined by Block 2. Dynamically build a Pydantic model from the contract fields, then pass scored chunks + the dynamic schema to a high-capacity LLM (GPT-4o) via Instructor to populate the asset. |
 | **Async Orchestration** | Receive requests via FastAPI, dispatch tasks to Celery workers via Redis, chain blocks automatically, and respond immediately with `202 Accepted`. |
 | **Resilience** | Automatic retries per block; on irreversible failure, freeze state and flag for manual intervention — no intermediate data is lost. |
 

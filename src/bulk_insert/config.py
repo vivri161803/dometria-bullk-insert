@@ -34,5 +34,10 @@ class Settings(BaseSettings):
     CHUNK_SIZE: int = 6  # sentences per chunk
     CHUNK_OVERLAP: int = 2  # overlapping sentences between consecutive chunks
 
+    # Block 2 — Contract Determination
+    EMBEDDING_MODEL: str = "paraphrase-multilingual-MiniLM-L12-v2"
+    CONTRACT_MIN_SCORE: int = 5  # minimum relevance_score to include a chunk
+    CONTRACT_TOP_K: int = 5  # max top-scoring chunks to use for voting
+
 
 settings = Settings()
