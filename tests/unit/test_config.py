@@ -120,3 +120,34 @@ class TestBlock2Settings:
         monkeypatch.setenv("CONTRACT_TOP_K", "10")
         s = Settings()
         assert s.CONTRACT_TOP_K == 10
+
+
+class TestBlock3Settings:
+    """Tests for Block 3 (Asset Extraction) settings."""
+
+    def test_default_contracts_dir_points_to_contracts_folder(self) -> None:
+        s = Settings()
+        assert s.CONTRACTS_DIR.name == "contracts"
+        assert s.CONTRACTS_DIR.is_absolute()
+
+    def test_default_extraction_max_attempts(self) -> None:
+        s = Settings()
+        assert s.EXTRACTION_MAX_ATTEMPTS == 3
+
+    def test_default_extraction_min_confidence(self) -> None:
+        s = Settings()
+        assert s.EXTRACTION_MIN_CONFIDENCE == 0.6
+
+    def test_default_extraction_excluded_types(self) -> None:
+        s = Settings()
+        assert s.EXTRACTION_EXCLUDED_TYPES == ("foreign_id", "decimal_pair")
+
+    def test_extraction_min_confidence_from_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("EXTRACTION_MIN_CONFIDENCE", "0.8")
+        s = Settings()
+        assert s.EXTRACTION_MIN_CONFIDENCE == 0.8
+
+    def test_extraction_max_attempts_from_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("EXTRACTION_MAX_ATTEMPTS", "5")
+        s = Settings()
+        assert s.EXTRACTION_MAX_ATTEMPTS == 5
