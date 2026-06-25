@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "prompt",
+            "if": "Bash(git commit*)",
+            "prompt": "You're about to commit changes. Have you updated CLAUDE.md to reflect any changes to architecture, status, or implementation? Review the 'Maintaining CLAUDE.md' section in CLAUDE.md if needed. Can you proceed with the commit?",
+            "statusMessage": "Checking CLAUDE.md updates..."
+          }
+        ]
+      }
+    ]
+  }
+}

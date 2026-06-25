@@ -97,70 +97,69 @@ Il Block 3 riceve il `Contract(lv1, lv2, lv3, schema_def={})` dal Block 2. È re
 
 ---
 
-## ⬜ Phase 5 — Database & State Persistence
-
-**Goal:** Persist pipeline state and results in PostgreSQL.
-
-- [ ] `src/bulk_insert/db/models.py` — modelli ORM SQLAlchemy: `Job`, `BlockResult` (colonne JSONB per dati intermedi).
-- [ ] `src/bulk_insert/db/session.py` — session factory async (`asyncpg` + SQLAlchemy async).
-- [ ] Setup Alembic — migrazione iniziale: creare tabelle `jobs` e `block_results`.
-- [ ] Repository layer — `src/bulk_insert/db/repository.py`: CRUD per jobs e block results.
-- [ ] Unit tests — test repository con SQLite in-memory o Postgres test-scoped.
-
-**Exit criteria:** Jobs e block results possono essere creati, aggiornati e interrogati. Le migrazioni girano senza errori.
+> **🔀 Architectural shift (from Phase 5 onward).** The original plan (Phases 5–9 below)
+> built an in-app async system: PostgreSQL for job state, Celery workers on a Redis broker,
+> and a `202 Accepted` + polling API. This was **replaced by a stateless, synchronous,
+> horizontally-scalable container**. The pipeline blocks are pure functions, so concurrency,
+> queueing, and retries are pushed down to the deployment platform (more replicas behind a
+> load balancer) instead of being reimplemented in the application. Celery, Redis, and
+> PostgreSQL — and the `db/` and `workers/` packages — are **no longer part of the plan.**
+> See `mission.md` and `tech-stack.md` for the full rationale.
 
 ---
 
-## ⬜ Phase 6 — Celery Workers & Task Chaining
+## ⬜ Phase 5 — Pipeline Orchestrator
 
-**Goal:** Wire blocks into async Celery tasks with automatic chaining and retry.
+**Goal:** Compose the three blocks into a single synchronous entry point — the glue currently missing.
 
-- [ ] `src/bulk_insert/workers/tasks.py` — definire task Celery: `preprocess_task`, `determine_contract_task`, `extract_asset_task`.
-- [ ] Task chaining — usare `celery.chain()` per collegare: preprocess → contract → extraction.
-- [ ] Retry config — policy di retry per task: max retries, backoff esponenziale, whitelist eccezioni.
-- [ ] Failure handling — al superamento dei retry: aggiornare status job a `FAILED`, persistere ultimo stato noto, log alert.
-- [ ] Celery config — `src/bulk_insert/workers/celery_app.py`: broker URL (Redis), result backend, serializzazione (JSON).
-- [ ] Integration test — avviare Redis + worker; sottomettere un job; verificare che la chain venga eseguita end-to-end.
+- [ ] `src/bulk_insert/pipeline.py` — `process_document(doc_id: str, text: str, cfg: Settings | None) -> PipelineResult`: runs `preprocess` → `determine_contract` → `extract_asset` in sequence and tags the output with `doc_id`.
+- [ ] `PipelineResult` model — `{ id, asset, confidence }` for success; a structured error variant `{ id, error }` carrying the failing stage.
+- [ ] Error translation — map block exceptions to outcomes: empty/blank text → bad input; `ContractDeterminationError` (no qualifying chunk) → unprocessable input; `ContractNotFoundError` / `AssetExtractionError` → server/schema error; upstream LLM failure → retryable.
+- [ ] Stateless guarantee — no I/O beyond reading bundled `contracts/`; nothing persisted; `doc_id` is opaque and only echoed.
+- [ ] Unit tests — happy path with all blocks mocked; each error branch; `id` is always echoed.
 
-**Exit criteria:** Un task inviato al broker scatena la chain completa; i failure vengono ritentati e infine segnalati.
-
----
-
-## ⬜ Phase 7 — FastAPI Orchestrator
-
-**Goal:** Expose the HTTP API that Dometria Connect calls.
-
-- [ ] `src/bulk_insert/api/app.py` — application factory FastAPI; lifespan per connection pool DB.
-- [ ] `src/bulk_insert/api/routes.py` — `POST /jobs`: accetta payload documento, crea job, lancia chain, ritorna `202 Accepted` + job ID. `GET /jobs/{id}`: ritorna stato job e risultati (se completato).
-- [ ] Schemi request/response — modelli Pydantic per input/output API.
-- [ ] Unit tests — test route con `httpx.AsyncClient` + Celery `.delay()` mockato.
-
-**Exit criteria:** L'API accetta un documento, risponde con `202`, e la pipeline background si attiva.
+**Exit criteria:** Given `(id, text)`, returns a compiled-asset result or a structured error, both carrying the `id`.
 
 ---
 
-## ⬜ Phase 8 — Docker Compose & Local E2E
+## ⬜ Phase 6 — FastAPI Synchronous Service
 
-**Goal:** Run the entire stack locally with one command.
+**Goal:** Expose the single HTTP endpoint Dometria Connect calls, plus health probes.
 
-- [ ] `Dockerfile` — build multi-stage: base image → deps → app. Target separati per API e worker.
-- [ ] `docker-compose.yml` — servizi: `api`, `worker`, `redis`, `postgres`. Health check per tutti.
-- [ ] Script test E2E — submit documento reale via `curl` → poll stato job → verificare asset estratto.
-- [ ] `README.md` — istruzioni setup, overview architettura, guida quick-start.
+- [ ] `src/bulk_insert/api/schemas.py` — `ProcessRequest{ id, text }`, `ProcessResponse{ id, asset, confidence }`, `ErrorResponse{ id, error }`.
+- [ ] `src/bulk_insert/api/routes.py` — `POST /process` (synchronous `def`, runs in the threadpool) → calls `process_document`; `GET /health` (liveness); `GET /ready` (readiness — green once models are warmed).
+- [ ] `src/bulk_insert/api/app.py` — FastAPI factory; lifespan warms the spaCy pipeline and embedding model so the first real request isn't cold.
+- [ ] Status-code mapping — `200` success (incl. low confidence); `400` empty text; `422` `ContractDeterminationError`; `502` upstream LLM failure; `500` otherwise. Every body echoes the `id`.
+- [ ] Concurrency limit — cap per-container in-flight requests (constrained threadpool / single uvicorn worker) so one replica doesn't run many heavy extractions at once.
+- [ ] Unit tests — route tests with `fastapi.testclient` / `httpx`, `process_document` mocked; assert status-code mapping and `id` echo.
 
-**Exit criteria:** `docker compose up` avvia lo stack completo; il test E2E passa.
+**Exit criteria:** `POST /process {id,text}` returns `{id, asset, confidence}` on the same request; health/readiness probes behave correctly.
 
 ---
 
-## ⬜ Phase 9 — Hardening & Observability (post-MVP)
+## ⬜ Phase 7 — Containerization
 
-**Goal:** Production readiness.
+**Goal:** Ship the service as one self-contained, stateless image.
 
-- [ ] Logging strutturato — aggiungere `python-json-logger`; arricchire ogni log con `job_id`, `block`, `duration`.
-- [ ] Health endpoints — `GET /health` (API liveness), `GET /ready` (connettività DB + Redis).
-- [ ] Graceful shutdown — Celery warm shutdown; FastAPI lifespan cleanup.
-- [ ] Rate limiting — rispettare rate limit OpenRouter; aggiungere token-bucket o leaky-bucket per modello.
-- [ ] Security — validare payload in ingresso; aggiungere auth API key per Dometria Connect.
-- [ ] Documentazione — revisione spec OpenAPI; runbook interno per scenari di failure.
+- [ ] `Dockerfile` — multi-stage (`uv` deps → app); single image, single process (uvicorn). No separate API/worker targets.
+- [ ] Bake models — download the sentence-transformers embedding model at build time (`HF_HOME`) so cold-start has no network dependency; bundle `contracts/`.
+- [ ] Runtime config — `OPENROUTER_API_KEY` and model/URL overrides injected via env/secrets, never baked into the image.
+- [ ] Trim `pyproject.toml` — remove `celery`, `redis`, `sqlalchemy`, `asyncpg`, `alembic`; refresh `uv.lock`.
+- [ ] `README.md` — build/run instructions, the API contract, and the deployment handoff notes (stateless, scale by replicas, long-request timeouts).
+- [ ] Smoke test — `docker run` the image and hit `POST /process` with a sample document.
 
-**Exit criteria:** Il servizio è production-ready per il rollout interno iniziale.
+**Exit criteria:** `docker run` starts the service; a real document submitted via `curl` returns a valid compiled asset.
+
+---
+
+## ⬜ Phase 8 — Hardening & Observability (post-MVP)
+
+**Goal:** Production readiness for internal rollout.
+
+- [ ] Structured logging — add `python-json-logger`; enrich every log line with `id`, `block`, and `duration`; emit to stdout/stderr.
+- [ ] Graceful shutdown — FastAPI lifespan cleanup; let in-flight requests drain before exit (so the orchestrator can do rolling deploys safely).
+- [ ] Rate limiting — respect OpenRouter rate limits; add per-model backoff/throttling to absorb `429`s.
+- [ ] Security — validate inbound payload size/shape; add an API-key check for Dometria Connect.
+- [ ] Documentation — review the auto-generated OpenAPI spec; write an internal runbook for failure scenarios.
+
+**Exit criteria:** The service is production-ready for the initial internal rollout.
