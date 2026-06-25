@@ -15,6 +15,11 @@ from bulk_insert.models.categories import (
 )
 from bulk_insert.models.chunk import Chunk, ChunkAnalysis, ChunkScore
 from bulk_insert.models.contract import Contract, Level1Prediction
+from bulk_insert.models.contract_loader import (
+    ContractNotFoundError,
+    contract_id_for,
+    load_contract_schema,
+)
 from bulk_insert.models.job import Job, JobStatus
 
 __all__ = [
@@ -23,6 +28,9 @@ __all__ = [
     "ChunkAnalysis",
     "ChunkScore",
     "Contract",
+    "ContractNotFoundError",
+    "load_contract_schema",
+    "contract_id_for",
     "Job",
     "JobStatus",
     "Level1Category",

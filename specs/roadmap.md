@@ -2,174 +2,165 @@
 
 > Each phase is designed to be **independently deliverable and testable**.
 > Phases are sequential — each builds on the previous one.
+>
+> **Legend:** ✅ = completata · ⬜ = da fare
 
 ---
 
-## Phase 0 — Project Scaffolding
+## ✅ Phase 0 — Project Scaffolding
 
 **Goal:** Establish the project skeleton, tooling, and developer workflow before any application logic.
 
-| Task | Detail |
-|---|---|
-| Initialize `pyproject.toml` with `uv` | Define project metadata, Python 3.13 requirement, initial dependencies. |
-| Create source layout | `src/bulk_insert/` package with `__init__.py`, `config.py`. |
-| Create test layout | `tests/unit/`, `tests/integration/` with a placeholder test. |
-| Configure `ruff` | `pyproject.toml` — linting + formatting rules. |
-| Configure `mypy` | `pyproject.toml` — strict mode. |
-| Configure `pre-commit` | `.pre-commit-config.yaml` — runs `ruff check`, `ruff format`, `pytest tests/unit`. |
-| Add `.gitignore` | Standard Python + uv + IDE ignores. |
-| Verify | `uv sync`, `ruff check .`, `mypy src/`, `pytest` — all pass on empty project. |
+- [x] Inizializzare `pyproject.toml` con `uv` — metadata, Python 3.13, dipendenze iniziali.
+- [x] Creare layout sorgenti — package `src/bulk_insert/` con `__init__.py`, `config.py`.
+- [x] Creare layout test — `tests/unit/`, `tests/integration/` con test segnaposto.
+- [x] Configurare `ruff` — regole linting + formatting in `pyproject.toml`.
+- [x] Configurare `mypy` — strict mode in `pyproject.toml`.
+- [x] Configurare `pre-commit` — `.pre-commit-config.yaml` con `ruff check`, `ruff format`, `pytest tests/unit`.
+- [x] Aggiungere `.gitignore` — ignore standard Python + uv + IDE.
+- [x] Verifica — `uv sync`, `ruff check .`, `mypy src/`, `pytest` passano tutti a zero errori.
 
-**Exit criteria:** A developer can clone, `uv sync`, and run all quality gates with zero errors.
+**Exit criteria:** Un developer può clonare, `uv sync`, e lanciare tutte le quality gate con zero errori.
 
 ---
 
-## Phase 1 — Pydantic Models & Config
+## ✅ Phase 1 — Pydantic Models & Config
 
 **Goal:** Define all shared data structures and configuration before implementing any logic.
 
-| Task | Detail |
-|---|---|
-| `src/bulk_insert/config.py` | `pydantic-settings` based config: OpenRouter API key, Redis URL, Postgres DSN, model names, chunk size, overlap size. |
-| `src/bulk_insert/models/chunk.py` | `Chunk` model: text, index, overlap metadata, coreference-resolved flag, relevance score. |
-| `src/bulk_insert/models/contract.py` | `Contract` model: dynamic JSON schema representation (lv1, lv2, lv3 fields). |
-| `src/bulk_insert/models/asset.py` | `Asset` model: populated contract; maps to final extraction output. |
-| `src/bulk_insert/models/job.py` | `Job` model: job ID, status enum (PENDING → PREPROCESSING → CONTRACTING → EXTRACTING → DONE → FAILED), timestamps, block results. |
-| Unit tests | Serialization round-trips, validation edge cases, enum transitions. |
+- [x] `src/bulk_insert/config.py` — config basata su `pydantic-settings`: OpenRouter API key, Redis URL, Postgres DSN, nomi modelli, chunk size, overlap, embedding model, contract min score, contract top-k.
+- [x] `src/bulk_insert/models/chunk.py` — modello `Chunk` (text, index, overlap metadata, flag coreference-resolved, relevance score) + `ChunkAnalysis` e `ChunkScore`.
+- [x] `src/bulk_insert/models/contract.py` — modello `Contract` (lv1, lv2, lv3, `schema_def` con default `{}`) + `Level1Prediction` (Instructor response model con `Level1Literal`).
+- [x] `src/bulk_insert/models/asset.py` — modello `Asset` (contract_id, data dict, confidence 0–1).
+- [x] `src/bulk_insert/models/job.py` — modello `Job` con enum `JobStatus` (PENDING → PREPROCESSING → CONTRACTING → EXTRACTING → DONE / FAILED), timestamps, block results.
+- [x] `src/bulk_insert/models/categories.py` — `CATEGORY_TREE`, `CATEGORY_NAMES`, `CATEGORY_ANCESTRY`, `Level1Category`, `Level1Literal`, helper functions `get_candidate_paths()` e `get_candidate_labels()`.
+- [x] Unit tests — serialization round-trip, validation edge cases, enum transitions, category helper correctness.
 
-**Exit criteria:** All models serialize/deserialize correctly; config loads from `.env`.
+**Exit criteria:** Tutti i modelli serializzano/deserializzano correttamente; la config si carica da `.env`.
 
 ---
 
-## Phase 2 — Block 1: Preprocessing
+## ✅ Phase 2 — Block 1: Preprocessing
 
 **Goal:** Implement sentence segmentation, chunking, and combined LLM scoring + coreference resolution as a standalone module.
 
-| Task | Detail |
-|---|---|
-| `src/bulk_insert/blocks/preprocessing.py` | spaCy pipeline: sentence segmentation → chunking with overlap. No separate coref step — see below. |
-| Combined scoring + coreference resolution | Single Instructor call per chunk to GPT-4o-mini. Input: chunk text. Output: `ChunkAnalysis` Pydantic model (`score` int 1–10, `resolved_text` str). The LLM both rates relevance and rewrites the text with pronouns replaced by their explicit referents. `Chunk.text` is updated with the resolved text; `Chunk.is_coref_resolved` is set `True`. |
-| Unit tests | Test chunking on sample texts; test overlap boundaries; test combined score + coref call with mocked LLM. |
-| Integration test | End-to-end with real LLM call on a small sample (gated behind `pytest.mark.integration`). |
+- [x] `src/bulk_insert/blocks/preprocessing.py` — pipeline spaCy (sentencizer only, no model download) → sentence segmentation → chunking con overlap.
+- [x] Scoring + coreference combinati — singola chiamata Instructor per chunk a GPT-4o-mini. Input: testo chunk. Output: `ChunkAnalysis` (score 1–10, resolved_text). L'LLM valuta la rilevanza e riscrive il testo risolvendo i coreference in un'unica chiamata.
+- [x] Unit tests — test chunking su testi campione, test overlap boundaries, test scoring + coref con LLM mockato.
+- [x] Integration test — end-to-end con chiamata LLM reale (gated da `pytest.mark.integration`).
 
-**Exit criteria:** Given raw text, produces a list of scored, coreference-resolved `Chunk` objects with correct overlap metadata.
+**Exit criteria:** Dato un testo grezzo, produce una lista di `Chunk` scorati e coref-resolved con overlap metadata corretti.
 
 ---
 
-## Phase 3 — Block 2: Contract Determination
+## ✅ Phase 3 — Block 2: Contract Determination
 
 **Goal:** Determine the target category path (`lv1/lv2/lv3`) from scored chunks using a two-stage hybrid approach — no knowledge graph.
 
-> **Architecture note:** The original architecture (`architecture.md`) envisioned a "graph matching" approach for lv2/lv3 deduction. Since the category structure is a simple 3-level tree with only 3 roots (not a complex graph), we adopted a simpler and more effective approach: LLM for lv1 → cosine similarity + weighted majority voting for lv2+lv3.
+> **Nota architetturale:** L'architettura originale (`architecture.md`) prevedeva un approccio "graph matching" per dedurre lv2/lv3. Poiché la struttura delle categorie è un semplice albero a 3 livelli con sole 3 radici (non un grafo complesso), abbiamo adottato un approccio più semplice ed efficace: LLM per lv1 → cosine similarity + majority voting pesato per lv2+lv3.
 
-| Task | Detail |
-|---|---|
-| `src/bulk_insert/blocks/contract.py` | Two-stage pipeline: **Stage 1** — Instructor-constrained LLM call (GPT-4o-mini) classifies document into one of 3 `Level1Literal` values. **Stage 2** — Sentence-transformers (`paraphrase-multilingual-MiniLM-L12-v2`) encodes chunk texts and candidate category labels; cosine similarity + relevance-weighted majority vote selects the winning `(lv2, lv3)` pair. |
-| Chunk filtering | Filter chunks by `relevance_score >= CONTRACT_MIN_SCORE` (default 5), select top-k (default 5) by descending score. |
-| Category helpers | `get_candidate_paths(lv1)` and `get_candidate_labels(lv1)` expand the `CATEGORY_TREE` into candidate `(lv2, lv3)` pairs with human-readable labels for embedding. |
-| Unit tests | Test chunk filtering, mocked LLM lv1 extraction, real embedding-based voting (restaurant/villa texts), end-to-end with mocked LLM + real embeddings. |
+- [x] `src/bulk_insert/blocks/contract.py` — pipeline a due stadi:
+  - **Stage 1:** Chiamata LLM vincolata con Instructor (GPT-4o-mini) classifica il documento in uno dei 3 valori `Level1Literal`.
+  - **Stage 2:** Sentence-transformers (`paraphrase-multilingual-MiniLM-L12-v2`) codifica testi chunk e label candidate; cosine similarity + majority vote pesato per `relevance_score` seleziona la coppia `(lv2, lv3)` vincente.
+- [x] Chunk filtering — filtra chunk con `relevance_score >= CONTRACT_MIN_SCORE` (default 5), seleziona top-k (default 5) per score decrescente.
+- [x] Category helpers — `get_candidate_paths(lv1)` e `get_candidate_labels(lv1)` espandono il `CATEGORY_TREE` in coppie candidate `(lv2, lv3)` con label leggibili per l'embedding.
+- [x] Custom exception — `ContractDeterminationError` per errori di filtering (nessun chunk qualificato).
+- [x] Embedding model — caricato lazily con `@lru_cache`, configurabile via `Settings.EMBEDDING_MODEL`.
+- [x] Logging strutturato — statistiche filtering, predizione lv1, top-3 candidati con score, vincitore finale.
+- [x] Unit tests — test filtering, mocked LLM lv1, voting con embedding reali (testi ristorante/villa), e2e con LLM mockato + embedding reali.
+- [x] Quality gates — `ruff check`, `ruff format`, `mypy --strict`, `pytest` tutti passano a zero errori.
 
-**Output:** `Contract(lv1, lv2, lv3, schema_def={})` — the category path is determined; schema loading is deferred to Block 3.
+**Output:** `Contract(lv1, lv2, lv3, schema_def={})` — il percorso categoria è determinato; il caricamento dello schema è demandato al Block 3.
 
-**Exit criteria:** Given scored chunks, outputs the correct `Contract` with the correct category path. The `lv3` code maps 1:1 to a contract JSON file in `contracts/`.
+**Exit criteria:** Dati chunk scorati, restituisce il `Contract` corretto. Il codice `lv3` mappa 1:1 a un file JSON contratto in `contracts/`.
 
 ---
 
-## Phase 4 — Block 3: Asset Extraction
+## ✅ Phase 4 — Block 3: Asset Extraction
 
 **Goal:** Load the contract schema and populate it using a high-capacity LLM.
 
-Block 3 receives the `Contract(lv1, lv2, lv3, schema_def={})` from Block 2. It is responsible for:
+Il Block 3 riceve il `Contract(lv1, lv2, lv3, schema_def={})` dal Block 2. È responsabile di:
 
-1. **Loading the contract schema** — using the `lv3` code to locate the matching JSON file in `contracts/` (naming convention: `{id}_{lv3_code}.json`). Each file contains the full field definitions (`data.fields.native`) with field keys, types, labels, and constraints.
-2. **Building a dynamic Pydantic model** — converting the contract field definitions into a Pydantic model (via `pydantic.create_model()`) to serve as the `response_model` for the Instructor call.
-3. **LLM extraction** — passing scored chunks + the dynamic schema to GPT-4o via Instructor. The constrained output guarantees the extracted data conforms to the contract structure.
+1. **Caricare lo schema del contratto** — usando il codice `lv3` per localizzare il file JSON corrispondente in `contracts/` (convenzione: `{id}_{lv3_code}.json`). Ogni file contiene le definizioni complete dei campi (`data.fields.native`) con key, tipi, label e vincoli.
+2. **Costruire un modello Pydantic dinamico** — convertendo le definizioni dei campi in un modello Pydantic (via `pydantic.create_model()`) da usare come `response_model` per la chiamata Instructor.
+3. **Estrazione LLM** — passando chunk scorati + schema dinamico a GPT-4o via Instructor. L'output vincolato garantisce che i dati estratti siano conformi alla struttura del contratto.
 
-| Task | Detail |
-|---|---|
-| `src/bulk_insert/models/contract_loader.py` | `load_contract_schema(lv3: str) -> dict` — locates and reads the contract JSON file by lv3 code. Returns the parsed `data` section with field definitions. |
-| `src/bulk_insert/blocks/extraction.py` | `build_dynamic_model(schema: dict) -> type[BaseModel]` — converts contract field definitions into a dynamic Pydantic model. `extract_asset(chunks, contract, cfg) -> Asset` — orchestrates schema loading, model building, and LLM extraction. |
-| Per-chunk extraction | Process chunks sequentially (or batched), merging partial results into the final asset. |
-| Unit tests | Mock LLM; verify output conforms to contract schema; test contract loading by lv3; test dynamic model building; test merge logic. |
+- [x] `src/bulk_insert/models/contract_loader.py` — `load_contract_schema(lv3: str) -> dict`: localizza e legge il file JSON del contratto tramite codice lv3 (glob `*_{lv3}.json`). Ritorna la sezione `data` con le definizioni dei campi. `contract_id_for(lv3)` ritorna lo stem del file. Eccezione `ContractNotFoundError`.
+- [x] `src/bulk_insert/blocks/extraction.py` — `build_dynamic_model(schema: dict) -> type[BaseModel]`: converte le definizioni campi in modello Pydantic dinamico (tutti i campi `Optional`, default `None`; `boolean`/`select` → `Literal`). `extract_asset(chunks, contract, cfg) -> Asset`: orchestra caricamento schema, costruzione modello e estrazione LLM.
+- [x] Estrazione single-batch — singola chiamata GPT-4o (`MODEL_HEAVY`) via Instructor sui chunk concatenati, con response model wrapper `{asset, confidence}`.
+- [x] Loop di re-estrazione — re-estrae finché `confidence < EXTRACTION_MIN_CONFIDENCE` (default 0.6) fino a `EXTRACTION_MAX_ATTEMPTS` (default 3); mantiene il miglior tentativo (fail-safe, nessun raise su bassa confidence).
+- [x] Field exclusion dichiarativa — esclude `type ∈ {foreign_id, decimal_pair}` o campi `native_location` non-text (geo id/coordinate).
+- [x] Unit tests — mock LLM; contract loading per lv3; costruzione modello dinamico (tipi, Literal, opzionalità, esclusioni, metadata); orchestratore (happy path, retry, exhaust-best, short-circuit, errori).
 
-**Exit criteria:** Given chunks + `Contract(lv1, lv2, lv3)`, loads the correct schema, produces a valid `Asset` that passes Pydantic validation.
+**Exit criteria:** Dati chunk + `Contract(lv1, lv2, lv3)`, carica lo schema corretto, produce un `Asset` valido che passa la validazione Pydantic.
 
 ---
 
-## Phase 5 — Database & State Persistence
+## ⬜ Phase 5 — Database & State Persistence
 
 **Goal:** Persist pipeline state and results in PostgreSQL.
 
-| Task | Detail |
-|---|---|
-| `src/bulk_insert/db/models.py` | SQLAlchemy ORM models: `Job`, `BlockResult` (JSONB columns for intermediate data). |
-| `src/bulk_insert/db/session.py` | Async session factory (`asyncpg` + SQLAlchemy async). |
-| Alembic setup | Initial migration: create `jobs` and `block_results` tables. |
-| Repository layer | `src/bulk_insert/db/repository.py` — CRUD for jobs and block results. |
-| Unit tests | Test repository with in-memory SQLite or test-scoped Postgres. |
+- [ ] `src/bulk_insert/db/models.py` — modelli ORM SQLAlchemy: `Job`, `BlockResult` (colonne JSONB per dati intermedi).
+- [ ] `src/bulk_insert/db/session.py` — session factory async (`asyncpg` + SQLAlchemy async).
+- [ ] Setup Alembic — migrazione iniziale: creare tabelle `jobs` e `block_results`.
+- [ ] Repository layer — `src/bulk_insert/db/repository.py`: CRUD per jobs e block results.
+- [ ] Unit tests — test repository con SQLite in-memory o Postgres test-scoped.
 
-**Exit criteria:** Jobs and block results can be created, updated, and queried. Migrations run cleanly.
+**Exit criteria:** Jobs e block results possono essere creati, aggiornati e interrogati. Le migrazioni girano senza errori.
 
 ---
 
-## Phase 6 — Celery Workers & Task Chaining
+## ⬜ Phase 6 — Celery Workers & Task Chaining
 
 **Goal:** Wire blocks into async Celery tasks with automatic chaining and retry.
 
-| Task | Detail |
-|---|---|
-| `src/bulk_insert/workers/tasks.py` | Define Celery tasks: `preprocess_task`, `determine_contract_task`, `extract_asset_task`. |
-| Task chaining | Use `celery.chain()` to link: preprocess → contract → extraction. |
-| Retry config | Per-task retry policy: max retries, exponential backoff, exception whitelist. |
-| Failure handling | On max retries exhausted: update job status to `FAILED`, persist last-known state, log alert. |
-| Celery config | `src/bulk_insert/workers/celery_app.py` — broker URL (Redis), result backend, serialization (JSON). |
-| Integration test | Spin up Redis + worker; submit a job; verify chain executes end-to-end. |
+- [ ] `src/bulk_insert/workers/tasks.py` — definire task Celery: `preprocess_task`, `determine_contract_task`, `extract_asset_task`.
+- [ ] Task chaining — usare `celery.chain()` per collegare: preprocess → contract → extraction.
+- [ ] Retry config — policy di retry per task: max retries, backoff esponenziale, whitelist eccezioni.
+- [ ] Failure handling — al superamento dei retry: aggiornare status job a `FAILED`, persistere ultimo stato noto, log alert.
+- [ ] Celery config — `src/bulk_insert/workers/celery_app.py`: broker URL (Redis), result backend, serializzazione (JSON).
+- [ ] Integration test — avviare Redis + worker; sottomettere un job; verificare che la chain venga eseguita end-to-end.
 
-**Exit criteria:** A task submitted to the broker triggers the full chain; failures are retried and eventually flagged.
+**Exit criteria:** Un task inviato al broker scatena la chain completa; i failure vengono ritentati e infine segnalati.
 
 ---
 
-## Phase 7 — FastAPI Orchestrator
+## ⬜ Phase 7 — FastAPI Orchestrator
 
 **Goal:** Expose the HTTP API that Dometria Connect calls.
 
-| Task | Detail |
-|---|---|
-| `src/bulk_insert/api/app.py` | FastAPI application factory; lifespan for DB connection pool. |
-| `src/bulk_insert/api/routes.py` | `POST /jobs` — accept document payload, create job, dispatch chain, return `202 Accepted` + job ID. `GET /jobs/{id}` — return job status and results (if done). |
-| Request/response schemas | Pydantic models for API input/output. |
-| Unit tests | Test routes with `httpx.AsyncClient` + mocked Celery `.delay()`. |
+- [ ] `src/bulk_insert/api/app.py` — application factory FastAPI; lifespan per connection pool DB.
+- [ ] `src/bulk_insert/api/routes.py` — `POST /jobs`: accetta payload documento, crea job, lancia chain, ritorna `202 Accepted` + job ID. `GET /jobs/{id}`: ritorna stato job e risultati (se completato).
+- [ ] Schemi request/response — modelli Pydantic per input/output API.
+- [ ] Unit tests — test route con `httpx.AsyncClient` + Celery `.delay()` mockato.
 
-**Exit criteria:** API accepts a document, responds with `202`, and the background pipeline triggers.
+**Exit criteria:** L'API accetta un documento, risponde con `202`, e la pipeline background si attiva.
 
 ---
 
-## Phase 8 — Docker Compose & Local E2E
+## ⬜ Phase 8 — Docker Compose & Local E2E
 
 **Goal:** Run the entire stack locally with one command.
 
-| Task | Detail |
-|---|---|
-| `Dockerfile` | Multi-stage build: base image → deps → app. Separate targets for API and worker. |
-| `docker-compose.yml` | Services: `api`, `worker`, `redis`, `postgres`. Health checks for all. |
-| E2E test script | Submit a real document via `curl` → poll job status → verify extracted asset. |
-| `README.md` | Setup instructions, architecture overview, quick-start guide. |
+- [ ] `Dockerfile` — build multi-stage: base image → deps → app. Target separati per API e worker.
+- [ ] `docker-compose.yml` — servizi: `api`, `worker`, `redis`, `postgres`. Health check per tutti.
+- [ ] Script test E2E — submit documento reale via `curl` → poll stato job → verificare asset estratto.
+- [ ] `README.md` — istruzioni setup, overview architettura, guida quick-start.
 
-**Exit criteria:** `docker compose up` starts the full stack; E2E test passes.
+**Exit criteria:** `docker compose up` avvia lo stack completo; il test E2E passa.
 
 ---
 
-## Phase 9 — Hardening & Observability (post-MVP)
+## ⬜ Phase 9 — Hardening & Observability (post-MVP)
 
 **Goal:** Production readiness.
 
-| Task | Detail |
-|---|---|
-| Structured logging | Add `python-json-logger`; enrich all log lines with `job_id`, `block`, `duration`. |
-| Health endpoints | `GET /health` (API liveness), `GET /ready` (DB + Redis connectivity). |
-| Graceful shutdown | Celery warm shutdown; FastAPI lifespan cleanup. |
-| Rate limiting | Respect OpenRouter rate limits; add token-bucket or leaky-bucket per model. |
-| Security | Validate incoming payloads; add API key auth for Dometria Connect. |
-| Documentation | OpenAPI spec review; internal runbook for failure scenarios. |
+- [ ] Logging strutturato — aggiungere `python-json-logger`; arricchire ogni log con `job_id`, `block`, `duration`.
+- [ ] Health endpoints — `GET /health` (API liveness), `GET /ready` (connettività DB + Redis).
+- [ ] Graceful shutdown — Celery warm shutdown; FastAPI lifespan cleanup.
+- [ ] Rate limiting — rispettare rate limit OpenRouter; aggiungere token-bucket o leaky-bucket per modello.
+- [ ] Security — validare payload in ingresso; aggiungere auth API key per Dometria Connect.
+- [ ] Documentazione — revisione spec OpenAPI; runbook interno per scenari di failure.
 
-**Exit criteria:** Service is production-ready for initial internal rollout.
+**Exit criteria:** Il servizio è production-ready per il rollout interno iniziale.

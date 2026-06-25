@@ -4,7 +4,12 @@ All settings are loaded from environment variables and/or a `.env` file.
 Swap LLM providers/models without code changes by editing `.env`.
 """
 
+from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Project root: src/bulk_insert/config.py -> parents[2] == repo root.
+_PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
 class Settings(BaseSettings):
@@ -38,6 +43,13 @@ class Settings(BaseSettings):
     EMBEDDING_MODEL: str = "paraphrase-multilingual-MiniLM-L12-v2"
     CONTRACT_MIN_SCORE: int = 5  # minimum relevance_score to include a chunk
     CONTRACT_TOP_K: int = 5  # max top-scoring chunks to use for voting
+
+    # Block 3 — Asset Extraction
+    CONTRACTS_DIR: Path = _PROJECT_ROOT / "contracts"  # directory of {id}_{lv3}.json files
+    EXTRACTION_MAX_ATTEMPTS: int = 3  # max extraction attempts for the confidence loop
+    EXTRACTION_MIN_CONFIDENCE: float = 0.6  # threshold to short-circuit re-extraction
+    # Field types the LLM cannot derive from free text — excluded from the dynamic model.
+    EXTRACTION_EXCLUDED_TYPES: tuple[str, ...] = ("foreign_id", "decimal_pair")
 
 
 settings = Settings()
