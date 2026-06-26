@@ -29,6 +29,13 @@ class Settings(BaseSettings):
     MODEL_LIGHTWEIGHT: str = "openai/gpt-4o-mini"
     MODEL_HEAVY: str = "openai/gpt-4o"
 
+    # LLM sampling — applied to every LLM call (scoring, lv1, extraction).
+    # Temperature 0.0 makes extraction near-deterministic (minimises run-to-run
+    # variance in which fields/values are produced). Seed is best-effort
+    # reproducibility (honoured only when the provider supports it).
+    LLM_TEMPERATURE: float = 0.0
+    LLM_SEED: int | None = None
+
     # Queue / Redis
     REDIS_URL: str = "redis://localhost:6379/0"
 

@@ -1,6 +1,7 @@
 """Unit tests for the sliding-window chunking logic."""
 
 import pytest
+
 from bulk_insert.blocks.preprocessing import create_chunks
 from bulk_insert.models.chunk import Chunk
 

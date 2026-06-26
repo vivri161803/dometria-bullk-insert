@@ -228,6 +228,9 @@ def _run_extraction(
     response_model: type[BaseModel],
     document_text: str,
     model: str,
+    *,
+    temperature: float = 0.0,
+    seed: int | None = None,
 ) -> tuple[BaseModel, float]:
     """Run a single Instructor extraction call.
 
@@ -238,6 +241,9 @@ def _run_extraction(
     """
     # Instructor returns an instance of `response_model` (the dynamic wrapper);
     # type it as Any to access the dynamically named `asset`/`confidence` fields.
+    sampling: dict[str, Any] = {"temperature": temperature}
+    if seed is not None:
+        sampling["seed"] = seed
     result: Any = client.chat.completions.create(
         model=model,
         response_model=response_model,
@@ -246,6 +252,7 @@ def _run_extraction(
             {"role": "system", "content": _EXTRACTION_SYSTEM_PROMPT},
             {"role": "user", "content": document_text},
         ],
+        **sampling,
     )
     asset_obj: BaseModel = result.asset
     confidence = float(result.confidence)
@@ -312,14 +319,27 @@ def extract_asset(
     logger.info("Block 3 — Step 3/3: LLM extraction (heavy model).")
     document_text = "\n---\n".join(c.text for c in sorted(chunks, key=lambda c: c.index))
     client = _build_instructor_client(effective_cfg)
-    model = f"openai/{effective_cfg.MODEL_HEAVY}"
+    # `from_provider` uses the `openai/` provider prefix; the model sent to
+    # OpenRouter is the bare configured slug (no extra prefix).
+    model = effective_cfg.MODEL_HEAVY
     threshold = effective_cfg.EXTRACTION_MIN_CONFIDENCE
-    max_attempts = effective_cfg.EXTRACTION_MAX_ATTEMPTS
+    temperature = effective_cfg.LLM_TEMPERATURE
+    seed = effective_cfg.LLM_SEED
+    # At temperature 0 every attempt is (near-)identical, so best-of-N retries
+    # only waste calls — collapse the confidence loop to a single attempt.
+    max_attempts = 1 if temperature == 0.0 else effective_cfg.EXTRACTION_MAX_ATTEMPTS
 
     best_asset: BaseModel | None = None
     best_confidence = -1.0
     for attempt in range(1, max_attempts + 1):
-        asset_obj, confidence = _run_extraction(client, response_model, document_text, model)
+        asset_obj, confidence = _run_extraction(
+            client,
+            response_model,
+            document_text,
+            model,
+            temperature=temperature,
+            seed=seed,
+        )
         logger.info(
             "Block 3 — extraction attempt %d/%d: confidence=%.3f.",
             attempt,

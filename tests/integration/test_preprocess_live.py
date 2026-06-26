@@ -10,6 +10,7 @@ Requires:
 """
 
 import pytest
+
 from bulk_insert.blocks.preprocessing import preprocess
 from bulk_insert.config import Settings
 
@@ -41,8 +42,8 @@ def test_preprocess_live_returns_scored_and_resolved_chunks() -> None:
     assert len(chunks) > 0, "Expected at least one chunk."
     for chunk in chunks:
         assert chunk.relevance_score is not None, f"Chunk {chunk.index} not scored."
-        assert (
-            1 <= chunk.relevance_score <= 10
-        ), f"Score {chunk.relevance_score} out of range for chunk {chunk.index}."
+        assert 1 <= chunk.relevance_score <= 10, (
+            f"Score {chunk.relevance_score} out of range for chunk {chunk.index}."
+        )
         assert chunk.text.strip(), f"Chunk {chunk.index} has empty text."
         assert chunk.is_coref_resolved is True, f"Chunk {chunk.index} not coref-resolved."

@@ -8,11 +8,19 @@ from typing import get_args
 from unittest.mock import MagicMock, patch
 
 import pytest
+from pydantic import BaseModel
+
 from bulk_insert.blocks.extraction import build_dynamic_model, extract_asset
+from bulk_insert.config import Settings
 from bulk_insert.models.chunk import Chunk
 from bulk_insert.models.contract import Contract
 from bulk_insert.models.contract_loader import ContractNotFoundError, load_contract_schema
-from pydantic import BaseModel
+
+
+def _cfg(temperature: float = 0.0, seed: int | None = None) -> Settings:
+    """Settings isolated from .env, with explicit sampling params."""
+    return Settings(_env_file=None, LLM_TEMPERATURE=temperature, LLM_SEED=seed)
+
 
 # ---------------------------------------------------------------------------
 # Test helpers
@@ -134,9 +142,12 @@ class TestExtractAsset:
         assert asset.data["name"] == "Trattoria da Mario"
 
     def test_retries_until_threshold(self) -> None:
+        # The retry loop only runs when temperature > 0 (stochastic extraction).
         client = self._patch_client(_fake_result(0.4), _fake_result(0.7))
         with patch("bulk_insert.blocks.extraction._build_instructor_client", return_value=client):
-            asset = extract_asset([_make_chunk()], _restaurant_contract())
+            asset = extract_asset(
+                [_make_chunk()], _restaurant_contract(), cfg=_cfg(temperature=0.5)
+            )
         assert client.chat.completions.create.call_count == 2
         assert asset.confidence == 0.7
 
@@ -144,7 +155,9 @@ class TestExtractAsset:
         client = self._patch_client(_fake_result(0.3), _fake_result(0.5), _fake_result(0.4))
         with patch("bulk_insert.blocks.extraction._build_instructor_client", return_value=client):
             with caplog.at_level(logging.WARNING):
-                asset = extract_asset([_make_chunk()], _restaurant_contract())
+                asset = extract_asset(
+                    [_make_chunk()], _restaurant_contract(), cfg=_cfg(temperature=0.5)
+                )
         assert client.chat.completions.create.call_count == 3
         assert asset.confidence == 0.5  # best of the three attempts
         assert "below threshold" in caplog.text
@@ -153,9 +166,39 @@ class TestExtractAsset:
         # Confidence exactly at threshold should stop after one attempt.
         client = self._patch_client(_fake_result(0.6))
         with patch("bulk_insert.blocks.extraction._build_instructor_client", return_value=client):
-            asset = extract_asset([_make_chunk()], _restaurant_contract())
+            asset = extract_asset(
+                [_make_chunk()], _restaurant_contract(), cfg=_cfg(temperature=0.5)
+            )
         assert client.chat.completions.create.call_count == 1
         assert asset.confidence == 0.6
+
+    def test_temperature_zero_runs_single_attempt(self) -> None:
+        # At temperature 0 the retry loop collapses to one attempt even when
+        # confidence stays below threshold (retries would be identical).
+        client = self._patch_client(_fake_result(0.3), _fake_result(0.5))
+        with patch("bulk_insert.blocks.extraction._build_instructor_client", return_value=client):
+            asset = extract_asset(
+                [_make_chunk()], _restaurant_contract(), cfg=_cfg(temperature=0.0)
+            )
+        assert client.chat.completions.create.call_count == 1
+        assert asset.confidence == 0.3
+
+    def test_forwards_sampling_params(self) -> None:
+        client = self._patch_client(_fake_result(0.9))
+        with patch("bulk_insert.blocks.extraction._build_instructor_client", return_value=client):
+            extract_asset(
+                [_make_chunk()], _restaurant_contract(), cfg=_cfg(temperature=0.0, seed=42)
+            )
+        kwargs = client.chat.completions.create.call_args.kwargs
+        assert kwargs["temperature"] == 0.0
+        assert kwargs["seed"] == 42
+
+    def test_omits_seed_when_unset(self) -> None:
+        client = self._patch_client(_fake_result(0.9))
+        with patch("bulk_insert.blocks.extraction._build_instructor_client", return_value=client):
+            extract_asset([_make_chunk()], _restaurant_contract(), cfg=_cfg(temperature=0.0))
+        kwargs = client.chat.completions.create.call_args.kwargs
+        assert "seed" not in kwargs
 
     def test_unknown_lv3_raises(self) -> None:
         with pytest.raises(ContractNotFoundError):

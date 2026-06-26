@@ -1,6 +1,7 @@
 """Unit tests for category helper functions (Block 2)."""
 
 import pytest
+
 from bulk_insert.models.categories import (
     CATEGORY_NAMES,
     CATEGORY_TREE,

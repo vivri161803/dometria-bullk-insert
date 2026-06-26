@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 import pytest
+
 from bulk_insert.models.contract_loader import (
     ContractNotFoundError,
     contract_id_for,

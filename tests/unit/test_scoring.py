@@ -3,10 +3,11 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
+from pydantic import ValidationError
+
 from bulk_insert.blocks.preprocessing import score_and_resolve_chunk, score_and_resolve_chunks
 from bulk_insert.config import Settings
 from bulk_insert.models.chunk import Chunk, ChunkAnalysis, ChunkScore
-from pydantic import ValidationError
 
 
 def make_chunk(index: int = 0, text: str = "John went to the store. He bought milk.") -> Chunk:
