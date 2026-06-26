@@ -37,6 +37,7 @@ from __future__ import annotations
 
 import logging
 from functools import lru_cache
+from typing import Any
 
 import instructor
 import spacy
@@ -192,7 +193,13 @@ _ANALYSIS_SYSTEM_PROMPT = (
 )
 
 
-def score_and_resolve_chunk(chunk: Chunk, client: instructor.Instructor) -> Chunk:
+def score_and_resolve_chunk(
+    chunk: Chunk,
+    client: instructor.Instructor,
+    *,
+    temperature: float = 0.0,
+    seed: int | None = None,
+) -> Chunk:
     """Score and coreference-resolve a single *chunk* in one LLM call.
 
     Parameters
@@ -202,6 +209,10 @@ def score_and_resolve_chunk(chunk: Chunk, client: instructor.Instructor) -> Chun
         ``is_coref_resolved`` is ``False`` on entry.
     client:
         A configured :class:`instructor.Instructor` instance.
+    temperature:
+        Sampling temperature for the call (default ``0.0`` for determinism).
+    seed:
+        Optional best-effort reproducibility seed.
 
     Returns
     -------
@@ -212,6 +223,9 @@ def score_and_resolve_chunk(chunk: Chunk, client: instructor.Instructor) -> Chun
         * ``relevance_score`` set to the LLM-assigned score,
         * ``is_coref_resolved`` set to ``True``.
     """
+    sampling: dict[str, Any] = {"temperature": temperature}
+    if seed is not None:
+        sampling["seed"] = seed
     analysis: ChunkAnalysis = client.chat.completions.create(
         model=getattr(client, "model", None) or "openai/gpt-4o-mini",
         response_model=ChunkAnalysis,
@@ -220,6 +234,7 @@ def score_and_resolve_chunk(chunk: Chunk, client: instructor.Instructor) -> Chun
             {"role": "system", "content": _ANALYSIS_SYSTEM_PROMPT},
             {"role": "user", "content": chunk.text},
         ],
+        **sampling,
     )
     resolved = chunk.model_copy(
         update={
@@ -248,6 +263,10 @@ def _build_instructor_client(cfg: Settings) -> instructor.Instructor:
         base_url=cfg.OPENROUTER_BASE_URL,
         api_key=cfg.OPENROUTER_API_KEY,
     )
+    # The `openai/` prefix above only selects the OpenAI-compatible provider.
+    # The model sent to OpenRouter must be the bare slug (e.g. "openai/gpt-4o-mini"
+    # or "mistralai/ministral-3b"); store it so the create call reads it back.
+    client.model = cfg.MODEL_LIGHTWEIGHT  # type: ignore[attr-defined]
     return client
 
 
@@ -278,7 +297,12 @@ def score_and_resolve_chunks(chunks: list[Chunk], cfg: Settings | None = None) -
 
     analysed: list[Chunk] = []
     for chunk in chunks:
-        analysed_chunk = score_and_resolve_chunk(chunk, client)
+        analysed_chunk = score_and_resolve_chunk(
+            chunk,
+            client,
+            temperature=effective_cfg.LLM_TEMPERATURE,
+            seed=effective_cfg.LLM_SEED,
+        )
         analysed.append(analysed_chunk)
 
     scores = [c.relevance_score for c in analysed]

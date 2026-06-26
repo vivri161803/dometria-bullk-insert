@@ -5,6 +5,7 @@ from __future__ import annotations
 from unittest.mock import MagicMock, patch
 
 import pytest
+
 from bulk_insert.blocks.contract import (
     ContractDeterminationError,
     determine_contract,

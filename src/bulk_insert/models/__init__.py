@@ -21,6 +21,12 @@ from bulk_insert.models.contract_loader import (
     load_contract_schema,
 )
 from bulk_insert.models.job import Job, JobStatus
+from bulk_insert.models.pipeline import (
+    ErrorCategory,
+    PipelineError,
+    PipelineResult,
+    PipelineStage,
+)
 
 __all__ = [
     "Asset",
@@ -33,6 +39,10 @@ __all__ = [
     "contract_id_for",
     "Job",
     "JobStatus",
+    "PipelineResult",
+    "PipelineError",
+    "PipelineStage",
+    "ErrorCategory",
     "Level1Category",
     "Level1Literal",
     "Level1Prediction",

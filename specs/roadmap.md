@@ -108,17 +108,20 @@ Il Block 3 riceve il `Contract(lv1, lv2, lv3, schema_def={})` dal Block 2. È re
 
 ---
 
-## ⬜ Phase 5 — Pipeline Orchestrator
+## ✅ Phase 5 — Pipeline Orchestrator
 
 **Goal:** Compose the three blocks into a single synchronous entry point — the glue currently missing.
 
-- [ ] `src/bulk_insert/pipeline.py` — `process_document(doc_id: str, text: str, cfg: Settings | None) -> PipelineResult`: runs `preprocess` → `determine_contract` → `extract_asset` in sequence and tags the output with `doc_id`.
-- [ ] `PipelineResult` model — `{ id, asset, confidence }` for success; a structured error variant `{ id, error }` carrying the failing stage.
-- [ ] Error translation — map block exceptions to outcomes: empty/blank text → bad input; `ContractDeterminationError` (no qualifying chunk) → unprocessable input; `ContractNotFoundError` / `AssetExtractionError` → server/schema error; upstream LLM failure → retryable.
-- [ ] Stateless guarantee — no I/O beyond reading bundled `contracts/`; nothing persisted; `doc_id` is opaque and only echoed.
-- [ ] Unit tests — happy path with all blocks mocked; each error branch; `id` is always echoed.
+> Spec: `specs/2026-06-26-pipeline-orchestrator/`.
 
-**Exit criteria:** Given `(id, text)`, returns a compiled-asset result or a structured error, both carrying the `id`.
+- [x] `src/bulk_insert/pipeline.py` — `process_document(doc_id: str, text: str, cfg: Settings | None) -> PipelineResult`: runs `preprocess` → `determine_contract` → `extract_asset` in sequence and tags the output with `doc_id`.
+- [x] `PipelineResult` model (`models/pipeline.py`) — single model `{ id, ok, asset?, confidence?, error? }`; the error variant carries `PipelineError{ stage, category, message }`.
+- [x] Error translation — map block exceptions to outcomes: empty/blank text → `bad_input`; `ContractDeterminationError` (no qualifying chunk) → `unprocessable`; `ContractNotFoundError` / `AssetExtractionError` → `server`; transient OpenAI/`httpx` failure → `retryable`; any other exception → `server` (catch-all, never raises).
+- [x] Stateless guarantee — no I/O beyond reading bundled `contracts/`; nothing persisted; `doc_id` is opaque and only echoed.
+- [x] Unit tests — happy path with all blocks mocked; each error branch; `id` is always echoed (16 tests).
+- [x] `bulk-insert-cli` (`cli.py`) — developer harness to run a document through the orchestrator from the terminal (`--text`/`--file`/stdin, `--json`).
+
+**Exit criteria:** Given `(id, text)`, returns a compiled-asset result or a structured error, both carrying the `id`. ✅
 
 ---
 

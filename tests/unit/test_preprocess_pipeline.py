@@ -4,6 +4,7 @@ import logging
 from unittest.mock import MagicMock, patch
 
 import pytest
+
 from bulk_insert.blocks.preprocessing import preprocess
 from bulk_insert.config import Settings
 from bulk_insert.models.chunk import Chunk, ChunkAnalysis

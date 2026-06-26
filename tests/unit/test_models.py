@@ -4,8 +4,9 @@ import uuid
 from datetime import datetime
 
 import pytest
-from bulk_insert.models import Asset, Chunk, ChunkAnalysis, ChunkScore, Contract, Job, JobStatus
 from pydantic import ValidationError
+
+from bulk_insert.models import Asset, Chunk, ChunkAnalysis, ChunkScore, Contract, Job, JobStatus
 
 
 class TestChunk:
