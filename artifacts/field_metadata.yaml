@@ -12418,6 +12418,7 @@ fields:
       - Locato
       - Occupato
     derivation: null
+    default: Libero
     unsure: false
   # TODO: human-confirm topic/priority
   real_estate_vincoli:

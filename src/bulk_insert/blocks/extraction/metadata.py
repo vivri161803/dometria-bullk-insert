@@ -165,6 +165,8 @@ class FieldMetadata:
                 kind=DerivationKind.COMPUTED,
             )
 
+        default = meta.get("default")
+
         return FieldNode(
             name=field.name,
             lv_path=lv_path,
@@ -180,6 +182,7 @@ class FieldMetadata:
             needs_evidence=needs_evidence,
             derivation=derivation,
             aggregate=aggregate,
+            default=default,
         )
 
 

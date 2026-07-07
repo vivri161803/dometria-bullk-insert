@@ -76,6 +76,7 @@ def _node(
     derivation: Derivation | None = None,
     source: str = "custom_fields",
     description: str | None = None,
+    default: Any = None,
 ) -> FieldNode:
     return FieldNode(
         name=name,
@@ -91,6 +92,7 @@ def _node(
         enum=enum,
         needs_evidence=needs_evidence,
         derivation=derivation,
+        default=default,
     )
 
 
@@ -502,6 +504,39 @@ class TestGroundAndAssemble:
         )
         assert res.record["name"] == "Mario"
         assert res.confidence == 1.0
+
+    def test_default_fills_null_mandatory_field(self) -> None:
+        # Extractor abstained; the policy default satisfies the mandatory field
+        # instead of routing it to review, and is flagged (no evidence quote).
+        out = ExtractionOutput(values={"occ": None})
+        node = _node("occ", mandatory=True, default="Libero")
+        res = ground_and_assemble([_chunk()], out, [node], _cfg(), run_judge=False)
+        assert res.record["occ"] == "Libero"
+        assert res.flags["occ"]["defaulted"] == {"value": "Libero"}
+        assert "occ" not in res.evidence
+        assert res.review_queue == []
+        assert res.confidence == 1.0  # defaulted counts as filled
+
+    def test_default_applies_after_grounding_nulls_value(self) -> None:
+        # An inferred value rejected by the gate falls back to the default.
+        out = ExtractionOutput(values={"occ": "Occupato"}, quotes={"occ": "subito abitabile"})
+        node = _node("occ", mandatory=True, default="Libero")
+        res = ground_and_assemble(
+            [_chunk()], out, [node], _cfg(), client=self._report({"occ": False})
+        )
+        assert res.record["occ"] == "Libero"
+        assert res.flags["occ"]["ungrounded"] is True
+        assert res.flags["occ"]["defaulted"] == {"value": "Libero"}
+
+    def test_default_does_not_override_grounded_value(self) -> None:
+        # Text says otherwise: a grounded extraction is kept, default untouched.
+        out = ExtractionOutput(values={"occ": "Locato"}, quotes={"occ": "attualmente locato"})
+        node = _node("occ", mandatory=True, default="Libero")
+        res = ground_and_assemble(
+            [_chunk()], out, [node], _cfg(), client=self._report({"occ": True})
+        )
+        assert res.record["occ"] == "Locato"
+        assert "defaulted" not in res.flags.get("occ", {})
 
 
 # ---------------------------------------------------------------------------

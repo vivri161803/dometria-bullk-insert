@@ -170,6 +170,19 @@ def ground_and_assemble(
         if grounded_value is not None and name in result.quotes:
             out.evidence[name] = result.quotes[name]
 
+    # Policy defaults — a field left null after grounding (extractor abstained, or
+    # its inferred value was rejected by the gate) falls back to the sidecar
+    # `default`. This is a business rule, not text evidence, so it carries no quote
+    # and is flagged `defaulted` for honest provenance. Applied before completeness
+    # so a defaulted mandatory field satisfies its requirement instead of queuing.
+    for node in nodes:
+        if node.default is None or out.record.get(node.name) is not None:
+            continue
+        out.record[node.name] = node.default
+        flag = dict(out.flags.get(node.name, {}))
+        flag["defaulted"] = {"value": node.default}
+        out.flags[node.name] = flag
+
     # Completeness — null mandatory fields go to the review queue.
     mandatory_total = 0
     mandatory_filled = 0

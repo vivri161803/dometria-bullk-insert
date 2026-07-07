@@ -138,6 +138,7 @@ class FieldNode:
     needs_evidence: bool = True
     derivation: Derivation | None = None
     aggregate: Aggregate | None = None  # §10 count/aggregate marker (opt-in)
+    default: Any = None  # policy fallback applied post-grounding when still null
 
     @property
     def is_derived(self) -> bool:
