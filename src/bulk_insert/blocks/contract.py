@@ -144,6 +144,9 @@ def _build_instructor_client(cfg: Settings) -> instructor.Instructor:
         f"openai/{cfg.MODEL_LIGHTWEIGHT}",
         base_url=cfg.OPENROUTER_BASE_URL,
         api_key=cfg.OPENROUTER_API_KEY,
+        # SDK-level backoff on 429 / transient errors, honouring Retry-After.
+        max_retries=cfg.LLM_MAX_RETRIES,
+        timeout=cfg.LLM_TIMEOUT,
     )
     # The `openai/` prefix above only selects the OpenAI-compatible provider.
     # The model sent to OpenRouter must be the bare slug; store it for the create call.

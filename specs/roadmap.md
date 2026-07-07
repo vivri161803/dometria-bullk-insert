@@ -521,14 +521,26 @@ calls (verified via `GET /config/models` and `_models`); flag-gated; gates stay 
 
 ---
 
-## ⬜ Phase 9 — Hardening & Observability (post-MVP)
+## ✅ Phase 9 — Hardening & Observability (post-MVP)
 
 **Goal:** Production readiness for internal rollout.
 
-- [ ] Structured logging — add `python-json-logger`; enrich every log line with `id`, `block`, and `duration`; emit to stdout/stderr.
-- [ ] Graceful shutdown — FastAPI lifespan cleanup; let in-flight requests drain before exit (so the orchestrator can do rolling deploys safely).
-- [ ] Rate limiting — respect OpenRouter rate limits; add per-model backoff/throttling to absorb `429`s.
-- [ ] Security — validate inbound payload size/shape; add an API-key check for Dometria Connect.
-- [ ] Documentation — review the auto-generated OpenAPI spec; write an internal runbook for failure scenarios.
+> Spec: `specs/2026-07-07-hardening.md`. Runbook: `docs/RUNBOOK.md`.
 
-**Exit criteria:** The service is production-ready for the initial internal rollout.
+- [x] Structured logging — `python-json-logger` via `logging_config.py`; every line
+      enriched with `id` + `block` (context vars, no signature churn) and lifecycle lines with
+      `duration_ms`; JSON to stdout (`LOG_JSON`, `LOG_LEVEL`). Uvicorn loggers unified.
+- [x] Graceful shutdown — lifespan withdraws readiness after `yield` (`/ready` → `503` so the
+      LB drains) + uvicorn `--timeout-graceful-shutdown` (`UVICORN_GRACEFUL_TIMEOUT`) lets
+      in-flight requests finish. Stateless — no resources to release.
+- [x] Rate limiting — SDK-level backoff: `max_retries`/`timeout` (`LLM_MAX_RETRIES`,
+      `LLM_TIMEOUT`) passed into all three Instructor builders, so every LLM call retries
+      `429`/transient errors with exponential backoff honouring OpenRouter's `Retry-After`.
+- [x] Security — `require_api_key` dependency on `/process` + `/config/*` (constant-time,
+      `API_KEY`/`API_KEY_HEADER`, probes stay open); body-size guard (`MAX_REQUEST_BYTES` →
+      `413`) in `api/middleware.py`; static `text` char cap + `id` min-length (→ `422`).
+- [x] Documentation — OpenAPI reviewed (version/description/tags, `/docs`+`/redoc`); internal
+      runbook (`docs/RUNBOOK.md`) with status-code→cause→action + failure scenarios; README
+      Hardening section.
+
+**Exit criteria:** The service is production-ready for the initial internal rollout. ✅

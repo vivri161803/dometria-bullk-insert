@@ -275,3 +275,103 @@ def test_set_model_disabled_returns_403() -> None:
     get = disabled_client.get("/config/models")
     assert get.status_code == 200
     assert get.json()["heavy"] == "test/heavy"
+
+
+# ── Phase 9 — API-key auth ──────────────────────────────────────────────────────
+
+
+@pytest.fixture
+def secured_client() -> TestClient:
+    cfg = Settings(
+        OPENROUTER_API_KEY="test",
+        MODEL_LIGHTWEIGHT="test/lightweight",
+        MODEL_HEAVY="test/heavy",
+        EMBEDDING_MODEL="test/embedding",
+        API_KEY="s3cret",
+    )
+    app = create_app(cfg)
+    app.state.ready = True
+    return TestClient(app)
+
+
+def test_process_without_key_is_401(secured_client: TestClient) -> None:
+    """H1 — a configured key is required on /process."""
+    response = secured_client.post("/process", json={"id": "doc-1", "text": "hello"})
+    assert response.status_code == 401
+
+
+def test_process_wrong_key_is_401(secured_client: TestClient) -> None:
+    """H2 — a wrong key is rejected."""
+    response = secured_client.post(
+        "/process", json={"id": "doc-1", "text": "hello"}, headers={"X-API-Key": "nope"}
+    )
+    assert response.status_code == 401
+
+
+def test_process_correct_key_passes(secured_client: TestClient) -> None:
+    """H3 — the correct key lets the request through."""
+    asset = _asset(confidence=0.9, completeness=1.0)
+    with patch("bulk_insert.api.routes.process_document") as mock_process:
+        mock_process.return_value = PipelineResult.success("doc-1", asset)
+        response = secured_client.post(
+            "/process", json={"id": "doc-1", "text": "hello"}, headers={"X-API-Key": "s3cret"}
+        )
+    assert response.status_code == 200
+
+
+def test_config_endpoints_require_key(secured_client: TestClient) -> None:
+    """H4 — /config/* is guarded too."""
+    assert secured_client.get("/config/models").status_code == 401
+    assert secured_client.get("/config/models", headers={"X-API-Key": "s3cret"}).status_code == 200
+
+
+def test_probes_are_open_when_key_configured(secured_client: TestClient) -> None:
+    """H5 — /health and /ready never require a key."""
+    assert secured_client.get("/health").status_code == 200
+    assert secured_client.get("/ready").status_code == 200
+
+
+def test_no_key_configured_means_open(client: TestClient) -> None:
+    """H6 — with API_KEY unset, /process needs no header (default fixture)."""
+    asset = _asset(confidence=0.9, completeness=1.0)
+    with patch("bulk_insert.api.routes.process_document") as mock_process:
+        mock_process.return_value = PipelineResult.success("doc-1", asset)
+        response = client.post("/process", json={"id": "doc-1", "text": "hello"})
+    assert response.status_code == 200
+
+
+# ── Phase 9 — payload-size + shape guards ───────────────────────────────────────
+
+
+def test_oversized_body_is_413() -> None:
+    """H7 — a body larger than MAX_REQUEST_BYTES is rejected before parsing."""
+    cfg = Settings(
+        OPENROUTER_API_KEY="test",
+        MODEL_LIGHTWEIGHT="test/lightweight",
+        MODEL_HEAVY="test/heavy",
+        EMBEDDING_MODEL="test/embedding",
+        MAX_REQUEST_BYTES=50,
+    )
+    app = create_app(cfg)
+    app.state.ready = True
+    tiny_limit_client = TestClient(app)
+
+    response = tiny_limit_client.post("/process", json={"id": "doc-1", "text": "x" * 500})
+    assert response.status_code == 413
+
+
+def test_request_id_header_echoed(client: TestClient) -> None:
+    """H8 — the correlation id is echoed on the response header."""
+    response = client.get("/health", headers={"X-Request-ID": "corr-123"})
+    assert response.headers["X-Request-ID"] == "corr-123"
+
+
+def test_text_over_max_length_rejected() -> None:
+    """H9 — the static text char-cap is enforced at the schema layer."""
+    from pydantic import ValidationError
+
+    from bulk_insert.api.schemas import MAX_TEXT_CHARS, ProcessRequest
+
+    ProcessRequest(id="ok", text="a" * MAX_TEXT_CHARS)  # at the cap — valid
+    with pytest.raises(ValidationError):
+        ProcessRequest(id="ok", text="a" * (MAX_TEXT_CHARS + 1))

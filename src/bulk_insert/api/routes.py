@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 
 from bulk_insert.api.schemas import (
@@ -13,12 +13,17 @@ from bulk_insert.api.schemas import (
     ProcessResponse,
     SetModelRequest,
 )
+from bulk_insert.api.security import require_api_key
 from bulk_insert.config import Settings
+from bulk_insert.logging_config import set_log_id
 from bulk_insert.pipeline import process_document
 
 __all__: list[str] = ["router"]
 
 router = APIRouter()
+
+# Applied to every non-probe route: enforce the API key when one is configured.
+_AUTH = [Depends(require_api_key)]
 
 # Maps PipelineError.category → HTTP status code.
 _STATUS_MAP: dict[str, int] = {
@@ -29,11 +34,13 @@ _STATUS_MAP: dict[str, int] = {
 }
 
 
-@router.post("/process", response_model=ProcessResponse)
+@router.post("/process", response_model=ProcessResponse, dependencies=_AUTH, tags=["extraction"])
 def process(request_body: ProcessRequest, request: Request) -> ProcessResponse | JSONResponse:
     """Run the extraction pipeline on a single document."""
     cfg: Settings = request.app.state.settings
 
+    # Tag every downstream log line with the caller's document id.
+    set_log_id(request_body.id)
     result = process_document(request_body.id, request_body.text, cfg)
 
     if result.ok and result.asset is not None:
@@ -66,14 +73,18 @@ def _model_config(cfg: Settings) -> ModelConfigResponse:
     )
 
 
-@router.get("/config/models", response_model=ModelConfigResponse)
+@router.get(
+    "/config/models", response_model=ModelConfigResponse, dependencies=_AUTH, tags=["config"]
+)
 def get_models(request: Request) -> ModelConfigResponse:
     """Report the LLM/embedding models currently in effect on this container."""
     cfg: Settings = request.app.state.settings
     return _model_config(cfg)
 
 
-@router.post("/config/model", response_model=ModelConfigResponse)
+@router.post(
+    "/config/model", response_model=ModelConfigResponse, dependencies=_AUTH, tags=["config"]
+)
 def set_model(
     request_body: SetModelRequest, request: Request
 ) -> ModelConfigResponse | JSONResponse:
@@ -97,13 +108,13 @@ def set_model(
     return _model_config(new_cfg)
 
 
-@router.get("/health", response_model=HealthResponse)
+@router.get("/health", response_model=HealthResponse, tags=["probes"])
 def health() -> HealthResponse:
     """Liveness probe — always returns 200."""
     return HealthResponse(status="ok")
 
 
-@router.get("/ready", response_model=HealthResponse)
+@router.get("/ready", response_model=HealthResponse, tags=["probes"])
 def ready(request: Request) -> HealthResponse | JSONResponse:
     """Readiness probe — 200 once warm-up is complete, 503 otherwise."""
     is_ready: bool = getattr(request.app.state, "ready", False)

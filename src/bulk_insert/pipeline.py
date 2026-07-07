@@ -25,6 +25,7 @@ Design notes
 from __future__ import annotations
 
 import logging
+import time
 
 import httpx
 from openai import APIConnectionError, APIError, RateLimitError
@@ -34,6 +35,7 @@ from bulk_insert.blocks.extraction import AssetExtractionError, extract_asset
 from bulk_insert.blocks.preprocessing import preprocess
 from bulk_insert.config import Settings
 from bulk_insert.config import settings as _default_settings
+from bulk_insert.logging_config import set_log_block
 from bulk_insert.models.contract_loader import ContractNotFoundError
 from bulk_insert.models.pipeline import PipelineResult, PipelineStage
 
@@ -82,16 +84,24 @@ def process_document(
         logger.warning("Pipeline id=%s rejected: empty or blank text.", doc_id)
         return PipelineResult.failure(doc_id, "input", "bad_input", "text is empty or blank")
 
+    started = time.perf_counter()
+
+    def _elapsed_ms() -> float:
+        return round((time.perf_counter() - started) * 1000, 2)
+
     current_stage: PipelineStage = "preprocess"
     try:
+        set_log_block(current_stage)
         logger.info("Pipeline id=%s — Block 1/3: preprocessing.", doc_id)
         chunks = preprocess(text, cfg=effective_cfg)
 
         current_stage = "contract"
+        set_log_block(current_stage)
         logger.info("Pipeline id=%s — Block 2/3: contract determination.", doc_id)
         contract = determine_contract(chunks, cfg=effective_cfg)
 
         current_stage = "extract"
+        set_log_block(current_stage)
         logger.info("Pipeline id=%s — Block 3/3: asset extraction.", doc_id)
         asset = extract_asset(chunks, contract, cfg=effective_cfg)
 
@@ -121,6 +131,7 @@ def process_document(
         doc_id,
         asset.contract_id,
         asset.confidence,
+        extra={"duration_ms": _elapsed_ms()},
     )
     return PipelineResult.success(doc_id, asset)
 

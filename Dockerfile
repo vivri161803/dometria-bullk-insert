@@ -66,7 +66,12 @@ ENV PATH="/app/.venv/bin:${PATH}" \
     PYTHONDONTWRITEBYTECODE=1 \
     PORT=8000 \
     UVICORN_LIMIT_CONCURRENCY=8 \
-    RUNTIME_MODEL_OVERRIDE_ENABLED=true
+    UVICORN_GRACEFUL_TIMEOUT=30 \
+    RUNTIME_MODEL_OVERRIDE_ENABLED=true \
+    LOG_JSON=true \
+    LOG_LEVEL=INFO
+# API_KEY is intentionally not defaulted — inject it at runtime to require the
+# X-API-Key header on /process and /config/* (unset ⇒ auth disabled).
 
 USER app
 
@@ -78,5 +83,6 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=3 \
       sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=4).status == 200 else 1)"
 
 # Single process, single uvicorn worker; in-flight requests capped via
-# --limit-concurrency. Scale throughput by adding replicas, not workers.
-CMD ["sh", "-c", "exec uvicorn 'bulk_insert.api.app:create_app' --factory --host 0.0.0.0 --port \"${PORT}\" --workers 1 --limit-concurrency \"${UVICORN_LIMIT_CONCURRENCY}\""]
+# --limit-concurrency. --timeout-graceful-shutdown lets in-flight extractions
+# drain on SIGTERM (rolling deploys). Scale throughput by adding replicas.
+CMD ["sh", "-c", "exec uvicorn 'bulk_insert.api.app:create_app' --factory --host 0.0.0.0 --port \"${PORT}\" --workers 1 --limit-concurrency \"${UVICORN_LIMIT_CONCURRENCY}\" --timeout-graceful-shutdown \"${UVICORN_GRACEFUL_TIMEOUT}\""]

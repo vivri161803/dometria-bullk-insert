@@ -121,5 +121,32 @@ class Settings(BaseSettings):
     # returns 403 and the models stay pinned to the baked/env values.
     RUNTIME_MODEL_OVERRIDE_ENABLED: bool = True
 
+    # ── Phase 9 — Hardening & Observability ────────────────────────────────────
+
+    # Structured logging. LOG_LEVEL sets the root level; LOG_JSON=True emits
+    # one JSON object per line to stdout (production — machine-parseable, every
+    # line enriched with `id`/`block`, lifecycle lines carry `duration_ms`).
+    # LOG_JSON=False falls back to a plain human formatter for local dev.
+    LOG_LEVEL: str = "INFO"
+    LOG_JSON: bool = True
+
+    # Rate limiting / backoff. Every Instructor client is built on an OpenAI
+    # client configured with these, so all LLM calls (scoring, lv1, extraction,
+    # derive/judge/ground/resolve/compile) inherit SDK-level retries with
+    # exponential backoff that honour OpenRouter's `Retry-After` on 429 — the
+    # per-model throttling that absorbs rate limits without app-level plumbing.
+    LLM_MAX_RETRIES: int = 5
+    LLM_TIMEOUT: float = 60.0
+
+    # Inbound security. When API_KEY is non-empty, /process and the /config/*
+    # endpoints require a matching `X-API-Key` header (401 otherwise); the
+    # liveness/readiness probes stay open. Empty (default) disables auth for
+    # local dev — set it in the deployment env. MAX_REQUEST_BYTES rejects
+    # oversized bodies at the edge (413) before parsing. (The document text field
+    # also carries a static per-field char cap — see api/schemas.py.)
+    API_KEY: str = ""
+    API_KEY_HEADER: str = "X-API-Key"
+    MAX_REQUEST_BYTES: int = 2_000_000
+
 
 settings = Settings()

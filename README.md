@@ -96,7 +96,12 @@ Runtime configuration is injected via environment (never baked into the image):
 | `MODEL_LIGHTWEIGHT` / `MODEL_HEAVY` | `openai/gpt-4o-mini` / `openai/gpt-4o` | Swap models with no code change (start-time; see runtime override below). |
 | `PORT` | `8000` | Listen port. |
 | `UVICORN_LIMIT_CONCURRENCY` | `8` | Max in-flight requests per replica (excess → `503`). |
+| `UVICORN_GRACEFUL_TIMEOUT` | `30` | Drain window (s) for in-flight requests on `SIGTERM`. |
 | `RUNTIME_MODEL_OVERRIDE_ENABLED` | `true` | Allow `POST /config/model` to swap LLM slugs on the running container; `false` pins them. |
+| `API_KEY` | — (empty ⇒ auth off) | When set, `/process` + `/config/*` require the `X-API-Key` header. |
+| `MAX_REQUEST_BYTES` | `2000000` | Reject larger request bodies with `413`. |
+| `LOG_JSON` / `LOG_LEVEL` | `true` / `INFO` | Structured JSON logs to stdout / verbosity. |
+| `LLM_MAX_RETRIES` / `LLM_TIMEOUT` | `5` / `60` | Per-LLM-call backoff (honours `Retry-After`) + timeout (s). |
 
 All other tunables have sane defaults in `config.py` and are overridable the same way.
 
@@ -146,7 +151,9 @@ Errors echo the `id` and a structured `PipelineError`, mapped from its category:
 | `server` | `500` | Missing/malformed schema, or any uncaught error. |
 
 FastAPI request-validation failures (empty `text`, missing `id`, malformed JSON) return `422`
-with FastAPI's default `{"detail": [...]}` envelope, produced before the handler runs.
+with FastAPI's default `{"detail": [...]}` envelope, produced before the handler runs. Two more
+edge responses come from the hardening layer: `401` (missing/invalid `X-API-Key` when `API_KEY`
+is configured) and `413` (request body exceeds `MAX_REQUEST_BYTES`).
 
 Full request/response examples and `curl` recipes: [`specs/mission.md`](specs/mission.md)
 ("API Guide").
@@ -175,8 +182,29 @@ Subsequent `POST /process` calls use the new slugs (visible under `_models` in t
 > replicas behind a load balancer, POST every replica (or run a single replica) for a
 > cluster-wide change — or set `MODEL_HEAVY`/`MODEL_LIGHTWEIGHT` via env and redeploy for a
 > durable one. The embedding model is baked into the image and is **not** runtime-swappable.
-> Set `RUNTIME_MODEL_OVERRIDE_ENABLED=false` to disable the endpoint (`POST` → `403`). The
-> endpoint is currently unauthenticated — protect it with the Phase 9 API-key auth.
+> Set `RUNTIME_MODEL_OVERRIDE_ENABLED=false` to disable the endpoint (`POST` → `403`). Protect
+> this endpoint with the API-key auth below (`API_KEY`).
+
+## Hardening & observability
+
+Production knobs (Phase 9). Full operations guide: [`docs/RUNBOOK.md`](docs/RUNBOOK.md).
+
+- **Structured logging** — JSON to stdout (`LOG_JSON=true`), one object per line, every line
+  tagged with `id` (document id, or the request-correlation id on the access line) and the
+  running `block`; lifecycle lines carry `duration_ms`. Every response echoes `X-Request-ID`
+  (the caller's header if supplied, else generated). `LOG_JSON=false` for human-readable dev logs.
+- **API-key auth** — set `API_KEY` to require an `X-API-Key` header on `/process` and
+  `/config/*` (constant-time compare; wrong/missing ⇒ `401`). The `/health` and `/ready` probes
+  stay open. Empty (default) disables auth for local dev.
+- **Payload guards** — bodies over `MAX_REQUEST_BYTES` are rejected at the edge with `413`
+  before parsing; `text` also has a static per-field char cap (`422`).
+- **Rate limiting / backoff** — every LLM call retries `429`/transient upstream errors with
+  exponential backoff honouring OpenRouter's `Retry-After` (`LLM_MAX_RETRIES`), bounded by
+  `LLM_TIMEOUT`. Exhausted backoff surfaces as a `502`.
+- **Graceful shutdown** — on `SIGTERM` readiness is withdrawn (`/ready` → `503`, so the LB
+  drains) and uvicorn finishes in-flight requests up to `UVICORN_GRACEFUL_TIMEOUT` before exit.
+- **OpenAPI docs** — Swagger UI at `/docs`, ReDoc at `/redoc`, schema at `/openapi.json`
+  (endpoints grouped under `extraction` / `config` / `probes` tags).
 
 ## Deployment handoff
 
@@ -192,5 +220,9 @@ topology (Kubernetes Deployment + HPA, ECS service, Cloud Run, …).
 - The load balancer should perform the **whole-document retry on a `502`** (resubmit the `id`).
 - Cap per-replica load with `UVICORN_LIMIT_CONCURRENCY`; add replicas for throughput, not
   workers/threads.
+- Set the orchestrator's **termination grace period ≥ `UVICORN_GRACEFUL_TIMEOUT`** so in-flight
+  extractions drain on rolling deploys.
+- Set `API_KEY` (and give it to Dometria Connect) to require authentication; scrape the JSON
+  logs from stdout into your log stack, correlating by `id` / `X-Request-ID`.
 - The only required runtime input is the `OPENROUTER_API_KEY` secret plus outbound network
   access to OpenRouter.

@@ -28,6 +28,10 @@ def build_instructor_client(cfg: Settings, model: str | None = None) -> instruct
         f"openai/{model or cfg.MODEL_HEAVY}",
         base_url=cfg.OPENROUTER_BASE_URL,
         api_key=cfg.OPENROUTER_API_KEY,
+        # SDK-level backoff: retries 429 / transient upstream errors with
+        # exponential backoff, honouring OpenRouter's Retry-After (Phase 9).
+        max_retries=cfg.LLM_MAX_RETRIES,
+        timeout=cfg.LLM_TIMEOUT,
     )
     return client
 

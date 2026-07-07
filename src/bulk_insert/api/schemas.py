@@ -10,6 +10,7 @@ from bulk_insert.models.asset import Asset
 from bulk_insert.models.pipeline import PipelineError
 
 __all__: list[str] = [
+    "MAX_TEXT_CHARS",
     "ProcessRequest",
     "ProcessResponse",
     "ErrorResponse",
@@ -18,12 +19,17 @@ __all__: list[str] = [
     "ModelConfigResponse",
 ]
 
+# Static upper bound on the document text field (shape validation → 422). The
+# dynamic byte-size guard (Settings.MAX_REQUEST_BYTES → 413) rejects oversized
+# request bodies at the edge before parsing; this bounds the parsed field.
+MAX_TEXT_CHARS = 1_000_000
+
 
 class ProcessRequest(BaseModel):
     """Inbound extraction request from Dometria Connect."""
 
-    id: str
-    text: str = Field(min_length=1)
+    id: str = Field(min_length=1)
+    text: str = Field(min_length=1, max_length=MAX_TEXT_CHARS)
 
 
 class ProcessResponse(BaseModel):
