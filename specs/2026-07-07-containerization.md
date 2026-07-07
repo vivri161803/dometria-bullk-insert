@@ -131,6 +131,31 @@ lean-context safety net.
   all green. No application code changes are expected in this phase, so the existing unit
   suite is the regression guard; the Dockerfile itself is exercised by the smoke test.
 
+## 4b. Image slimming (CPU torch + strip)
+
+The initial `linux/amd64` image was **9.73 GB** — `sentence-transformers` pulls `torch`, whose
+default PyPI wheel drags in ~2.9 GB of `nvidia-*` CUDA libraries + ~0.66 GB of `triton` (GPU
+runtime this CPU-only service never touches). Slimmed to **~2.46 GB** (`docker images`):
+
+- **CPU torch (biggest win).** `torch` is declared explicitly and sourced from the PyTorch CPU
+  wheel index for Linux only: `[[tool.uv.index]] pytorch-cpu` +
+  `[tool.uv.sources] torch = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux'" }]`.
+  `uv lock` then drops every `nvidia-*` and `triton` entry; the Linux resolution is
+  `torch 2.x+cpu`. macOS/Windows keep the default PyPI wheel (already CPU/MPS), so local dev
+  resolves unchanged.
+- **Strip shared libs.** The builder installs `binutils`, runs
+  `strip --strip-unneeded` over the venv's `*.so*`, then purges `binutils` in the same layer
+  (never reaches runtime).
+- **No bytecode bloat.** Dropped `UV_COMPILE_BYTECODE=1` and pruned `__pycache__` (bytecode is
+  regenerated lazily; the app user owns `/app` so it can write `.pyc` at runtime).
+- **Determinism.** Builds are pinned with `--platform` in the docs; the default platform on
+  Apple Silicon flip-flopped between `arm64` (no CUDA) and `amd64` (CUDA), which is what
+  produced the inconsistent early sizes.
+
+Verified: the slim `amd64` image runs, `/ready` turns green, `POST /process` on `sample.txt`
+returns a valid asset (CPU inference), and `GET /config/models` responds — with no `nvidia`
+package present in the venv.
+
 ## 5. Exit criteria
 
 `docker run` starts the service; `/health` is `200` immediately, `/ready` turns `200` after

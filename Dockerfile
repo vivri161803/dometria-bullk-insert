@@ -9,13 +9,13 @@ FROM python:3.13-slim AS builder
 # Pinned uv (matches the project toolchain). Provides the `uv` binary only.
 COPY --from=ghcr.io/astral-sh/uv:0.11.18 /uv /usr/local/bin/uv
 
-ENV UV_COMPILE_BYTECODE=1 \
-    UV_LINK_MODE=copy \
+ENV UV_LINK_MODE=copy \
     UV_PYTHON_DOWNLOADS=0
 
 WORKDIR /app
 
-# 1) Dependencies only — cached across source-only changes.
+# 1) Dependencies only — cached across source-only changes. On Linux, torch
+#    resolves to the CPU wheel (no CUDA/nvidia/triton) via the pytorch-cpu index.
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 
@@ -30,6 +30,17 @@ ENV HF_HOME=/opt/hf
 RUN /app/.venv/bin/python -c \
     "from sentence_transformers import SentenceTransformer; \
      SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')"
+
+# 4) Slim the venv: strip debug symbols from shared libs (biggest single win
+#    after CPU torch) and drop bytecode caches. binutils is installed only to
+#    run `strip` and purged in the same layer so it never reaches the runtime.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends binutils \
+    && find /app/.venv -name '*.so*' -type f -exec strip --strip-unneeded {} + 2>/dev/null || true \
+    && find /app/.venv -type d -name '__pycache__' -prune -exec rm -rf {} + \
+    && apt-get purge -y binutils \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/*
 
 # ── Stage 2: runtime ───────────────────────────────────────────────────────────
 # Minimal image: the venv, the app, the static assets, and the baked model.

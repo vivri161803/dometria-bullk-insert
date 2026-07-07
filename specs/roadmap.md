@@ -494,6 +494,7 @@ are loaded and valid.
 - [x] Trim `pyproject.toml` — `celery`/`redis`/`sqlalchemy`/`asyncpg`/`alembic` were already absent (dropped earlier with the `REDIS_URL`/`DATABASE_URL` config fields); `uv.lock` re-verified in sync.
 - [x] `README.md` — build/run instructions, the API contract, and the deployment handoff notes (stateless, scale by replicas, long-request timeouts).
 - [x] Smoke test — `docker run` the image and hit `POST /process` with a sample document.
+- [x] Image slimming — pin `torch` to the CPU wheel index on Linux (drops ~3.5 GB CUDA/triton), strip `.so` symbols, skip bytecode: **~9.7 GB → ~2.5 GB** on `amd64`. `.gitignore` keeps the built image out of git (published to GHCR).
 
 **Exit criteria:** `docker run` starts the service; a real document submitted via `curl` returns a valid compiled asset. ✅
 

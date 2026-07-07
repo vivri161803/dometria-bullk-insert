@@ -64,11 +64,20 @@ required runtime input is the OpenRouter API key.
 ### Build
 
 ```bash
-docker build -t bulk-insert:local .
+# Build for your deployment target. Pin --platform for reproducibility.
+docker build --platform linux/amd64 -t bulk-insert:local .
 ```
 
 The build installs dependencies with `uv` and downloads the embedding model into the image's
 Hugging Face cache (`HF_HOME`), so cold-start has no network dependency except OpenRouter.
+
+**Image size (~2.5 GB).** `torch` is pinned to the **CPU-only** PyTorch wheel index on Linux
+(`pyproject.toml` → `[tool.uv.sources]`), which drops the ~3.5 GB of CUDA/nvidia + triton GPU
+libraries the default wheel pulls — this service only does CPU sentence-transformer inference.
+The build further strips debug symbols from shared libraries and skips bytecode precompilation.
+(Without the CPU pin, an `amd64` image is ~9.7 GB.) macOS/Windows local dev is unaffected — the
+CPU source is scoped to `sys_platform == 'linux'`; elsewhere the default PyPI wheel (already
+CPU/MPS) is used.
 
 ### Run
 
