@@ -7,7 +7,8 @@ the runs that agree on the modal contract, reports per-field:
 * **agreement** — modal-value fraction across runs (1.0 = perfectly reproducible);
 * **abstention** — fraction of runs where the field was null (absent/ungrounded);
 * **hallucination proxy** — fraction of runs where the field was populated *without*
-  a verbatim evidence quote (should be ~0 given the quote validator);
+  a verbatim evidence quote (should be ~0 given the quote validator); policy-``defaulted``
+  values are excluded — they are quote-less by design, not hallucinated;
 * **review-rate** — fraction of runs that routed the field to ``review_queue``.
 
 The aggregate **field-level agreement** is the mean per-field agreement — the
@@ -107,8 +108,15 @@ def _per_field_metrics(assets: list[Asset]) -> dict[str, dict[str, Any]]:
         counts = Counter(_hashable(v) for v in values)
         top_hashable, top = counts.most_common(1)[0]
         nulls = sum(1 for v in values if v is None)
+        # A policy-defaulted value is populated but carries no evidence quote *by
+        # design* (a default is a business rule, not text evidence), so it must not
+        # count as a hallucination. Exclude fields flagged `defaulted`.
         populated_without_quote = sum(
-            1 for a in assets if a.data.get(key) is not None and key not in (a.evidence or {})
+            1
+            for a in assets
+            if a.data.get(key) is not None
+            and key not in (a.evidence or {})
+            and "defaulted" not in ((a.flags or {}).get(key) or {})
         )
         reviewed = sum(1 for a in assets if key in (a.review_queue or []))
 

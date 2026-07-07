@@ -64,7 +64,15 @@ _JUDGE_SYSTEM_PROMPT = (
     "extracted value and the verbatim quote it was taken from. Decide whether the "
     "quote (in the context of the document) ENTAILS the value: passed=true if the "
     "value is fully supported by the quote, passed=false if it is unsupported or "
-    "contradicted. Return one assessment per field, using the exact field names."
+    "contradicted. "
+    "Numeric exception: when the extracted value is a NUMBER and the quote states "
+    "that magnitude as an approximation or a bound — e.g. 'oltre 5.000', 'circa 200', "
+    "'almeno 3', 'più di', 'superiore a', 'fino a', 'intorno a', 'quasi', 'da X a Y' — "
+    "treat the number as supported: a faithful transcription of a stated bound or "
+    "approximation is entailed, so do NOT require the quote to state the exact figure. "
+    "This exception applies to numbers ONLY; enum, boolean and free-text values must "
+    "still be fully and literally supported by the quote. "
+    "Return one assessment per field, using the exact field names."
 )
 
 

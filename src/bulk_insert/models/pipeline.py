@@ -3,7 +3,7 @@
 The orchestrator never raises: every call returns a :class:`PipelineResult`
 carrying the original ``id``.  On success ``asset`` + ``confidence`` are
 populated; on failure ``error`` describes the failing ``stage`` and a
-``category`` rich enough for the (Phase 6) HTTP layer to choose a status code
+``category`` rich enough for the (Phase 7) HTTP layer to choose a status code
 without re-inspecting exception types.
 """
 

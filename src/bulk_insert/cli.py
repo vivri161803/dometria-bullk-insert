@@ -3,7 +3,7 @@
 A thin developer tool (not part of the service contract) for running a real
 document through ``process_document`` — Block 1 → 2 → 3 with live LLM calls —
 and inspecting the structured result.  Useful for manual verification before the
-Phase 6 HTTP layer exists.
+Phase 7 HTTP layer exists.
 
 Usage
 -----

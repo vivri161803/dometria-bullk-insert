@@ -423,15 +423,62 @@ pass; mypy + ruff clean.
 ## ⬜ Phase 7 — FastAPI Synchronous Service
 
 **Goal:** Expose the single HTTP endpoint Dometria Connect calls, plus health probes.
+Thin adapter over `pipeline.process_document` (which already never raises and
+returns a structured `PipelineResult`); the API maps its `error.category` to a
+status code and echoes `id`. No pipeline logic moves into the API layer.
 
-- [ ] `src/bulk_insert/api/schemas.py` — `ProcessRequest{ id, text }`, `ProcessResponse{ id, asset, confidence }`, `ErrorResponse{ id, error }`.
-- [ ] `src/bulk_insert/api/routes.py` — `POST /process` (synchronous `def`, runs in the threadpool) → calls `process_document`; `GET /health` (liveness); `GET /ready` (readiness — green once models are warmed).
-- [ ] `src/bulk_insert/api/app.py` — FastAPI factory; lifespan warms the spaCy pipeline and embedding model so the first real request isn't cold.
-- [ ] Status-code mapping — `200` success (incl. low confidence); `400` empty text; `422` `ContractDeterminationError`; `502` upstream LLM failure; `500` otherwise. Every body echoes the `id`.
-- [ ] Concurrency limit — cap per-container in-flight requests (constrained threadpool / single uvicorn worker) so one replica doesn't run many heavy extractions at once.
-- [ ] Unit tests — route tests with `fastapi.testclient` / `httpx`, `process_document` mocked; assert status-code mapping and `id` echo.
+- [ ] **Surface mandatory-completeness on `Asset` (small Block 3 change).** The
+      grounding stage already computes `completeness = mandatory_filled / mandatory_total`
+      (`ground.py`) but folds it into `confidence` and discards it. Carry it out:
+      `GroundResult.completeness` → `Asset.completeness: float | None` (in `[0.0, 1.0]`,
+      `None`/`1.0` when the product has no mandatory fields) → wired in
+      `extraction/orchestrator.py`. This is the "percentage of mandatory fields filled
+      after extraction" and complements `review_queue` (which lists *which* are missing)
+      with a single scalar. Add a unit test in the Block 3 suite; existing tests stay green.
+- [ ] `src/bulk_insert/api/schemas.py` — `ProcessRequest{ id, text }`,
+      `ProcessResponse{ id, asset, confidence, completeness, _models }`,
+      `ErrorResponse{ id, error }`.
+      **`asset` is the full Block 3 v2 `Asset`** — its `evidence`, `flags`,
+      `review_queue`, and the new `completeness` (Phase 6/above) serialize **nested inside
+      `asset` as-is**; the API adds no top-level review envelope (callers read
+      `asset.review_queue`). `completeness` is also **lifted to the top level** alongside
+      `confidence` (mirroring how `PipelineResult.success` lifts `confidence` off the
+      asset) so a caller can read the mandatory-completion percentage without descending
+      into `asset`. `_models` mirrors the CLI's block (`{lightweight, heavy, embedding}`
+      from `settings.MODEL_LIGHTWEIGHT` / `MODEL_HEAVY` / `EMBEDDING_MODEL`, cf.
+      `cli.py:_models_used`) for observability/debugging parity.
+- [ ] `src/bulk_insert/api/routes.py` — `POST /process` (synchronous `def`, runs in the
+      threadpool) → calls `process_document`; `GET /health` (liveness); `GET /ready`
+      (readiness — green once models **and offline artifacts** are warmed/valid).
+- [ ] `src/bulk_insert/api/app.py` — FastAPI factory; lifespan warms **(a)** the spaCy
+      pipeline (`preprocessing._get_nlp`) and embedding model
+      (`contract._get_embedding_model(settings.EMBEDDING_MODEL)`), and **(b)** loads +
+      validates the offline artifacts Block 3 v2 depends on — the field tree
+      (`tree.load_field_tree`), the compiled sidecar (`metadata.load_field_metadata`),
+      and topics (via the same load path). A missing/uncompiled artifact should fail
+      **readiness**, not the first real request.
+- [ ] Status-code mapping — driven by `PipelineResult.error.category`, not by
+      re-inspecting exceptions: `200` success (**incl. low confidence _and_ a non-empty
+      `review_queue`** — both are successful extractions, surfaced in the body, never a
+      non-2xx); `400` `bad_input` (empty/blank text); `422` `unprocessable`
+      (`ContractDeterminationError`); `502` `retryable` (transient upstream LLM/network);
+      `500` `server` (missing/malformed schema, catch-all). Every body — success or
+      error — echoes the `id`.
+- [ ] Concurrency limit — cap per-container in-flight requests (constrained threadpool /
+      single uvicorn worker) so one replica doesn't run many heavy extractions at once.
+- [ ] Unit tests — route tests with `fastapi.testclient` / `httpx`, `process_document`
+      mocked; assert the full `category → status` mapping and `id` echo; assert a result
+      with a populated `review_queue` still returns `200` with the queue nested under
+      `asset`; assert `completeness` is present both nested (`asset.completeness`) and
+      lifted to the top level; assert `_models` is present and matches settings.
 
-**Exit criteria:** `POST /process {id,text}` returns `{id, asset, confidence}` on the same request; health/readiness probes behave correctly.
+**Exit criteria:** `POST /process {id,text}` returns
+`{id, asset, confidence, completeness, _models}` on the same request, with
+`evidence`/`flags`/`review_queue`/`completeness` nested inside `asset` (and `confidence` +
+`completeness` also lifted to the top level), a non-empty `review_queue` still a `200`,
+and `completeness` reporting the share of mandatory fields filled; `/health` is
+liveness-only and `/ready` is green only once both the models and the offline artifacts
+are loaded and valid.
 
 ---
 

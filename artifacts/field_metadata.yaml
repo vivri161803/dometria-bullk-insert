@@ -14625,7 +14625,7 @@ fields:
     unsure: false
   # TODO: human-confirm topic/priority
   villa_superficie_terreno_mq:
-    description: Superficie totale del terreno della villa espressa in metri quadri.
+    description: Superficie totale del terreno della villa espressa in metri quadri, considerando giardino, parco, orto e appezzamenti di terra.
     topic: 1
     mandatory: true
     priority: 5

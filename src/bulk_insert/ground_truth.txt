@@ -1,0 +1,27 @@
+=========================================
+GROUND TRUTH - IE PIPELINE EVALUATION
+=========================================
+
+Questa ground truth mappa le esatte entità attese dal testo di benchmark, includendo
+i campi obbligatori (mandatory) e un sottoinsieme mirato di campi opzionali per testare
+capacità di inferenza e gestione dei tranelli (trap) del modello estrattivo.
+
+[CAMPI OBBLIGATORI (Mandatory: Yes)]
+--------------------------------------------------
+name: "Villa / Casolare, Cisanello" (Sintetizzato dal contesto)
+address_line: "Via San Biagio 32" (Esplicito)
+real_estate_prezzo_richiesto_eur: 520000 (Esplicito)
+real_estate_stato_di_occupazione: "Libero" (Inferito da "subito abitabile / pronto per essere liberato")
+villa_superficie_coperta_mq: 190 (Esplicito)
+villa_numero_camere_da_letto: 3 (Esplicito/Calcolato)
+
+[CAMPI OPZIONALI SELEZIONATI (Mandatory: No)]
+--------------------------------------------------
+locality: "Cisanello" (Esplicito)
+municipality_string: "Pisa" (Esplicito)
+villa_giardino_mq: 5000 (Esplicito da "oltre 5.000 mq")
+villa_garage_posto_auto_n: 2 (Inferito dal conteggio logico: 1 porticato/garage + 1 posto auto scoperto)
+real_estate_stato_di_conservazione: "Buono stato" (Esplicito)
+villa_privacy_isolamento: "Alto" (Inferito semanticamente da "libero su tre lati", "riparato", "altissimo livello di privacy")
+real_estate_classe_energetica_ape: null (TRAP: il testo riporta "177 kWh/m² anno" che è il consumo, non la classe A-G. Un buon modello NER non deve falsi-positivi qui)
+real_estate_anno_di_costruzione_epoca: null (TRAP: il testo menziona "Legge 90 del 2013", un modello debole potrebbe estrarre 2013 come anno di costruzione)
