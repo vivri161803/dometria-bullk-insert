@@ -62,3 +62,7 @@ venv.bak/
 # OS-specific
 .DS_Store
 Thumbs.db
+
+# Local run artifacts (eval/variance harness progress logs)
+eval_progress.log
+*.progress.log

@@ -293,20 +293,28 @@ runtime normalization pass. **Part B** — two opt-in, evidence-bounded resolver
 the closed-vocab extractor structurally cannot express (a broken heating enum nulled every
 run; a mandatory bedroom count with no single verbatim span).
 
-- **Part A — Normalization (deterministic, no LLM):** canonicalize raw LLM-extracted values
-  — Italian numbers/currency → numerics, ambiguous area units → canonical unit, dates/years
-  → canonical form, free-text whitespace tidied. Unlike cross-field derivation (this catalog
-  has ~zero valid candidates), single-field normalization **cleans** the extracted value
-  rather than replacing it, so it cannot overwrite a correctly-transcribed number with a
-  wrong guess. Runs **per request**; pure Python.
+- **Part A — Normalization (deterministic, no LLM · Stage 4b `normalize.py`):** canonicalize
+  raw LLM-extracted values — Italian numbers/currency → numerics, dates/years → canonical
+  form, free-text whitespace tidied. Unlike cross-field derivation (this catalog has ~zero
+  valid candidates), single-field normalization **cleans** the extracted value rather than
+  replacing it, so it cannot overwrite a correctly-transcribed number with a wrong guess.
+  Runs **per request**; pure Python. **As shipped it is a type-driven lookup table**: because
+  the extraction schema already types numerics/enums, the numeric normalizers are a defensive
+  safety net (the real work is `date`/`text`), and the **mq/ha `area_unit` unit resolution +
+  its sidecar override are deferred** (see the Part A block).
 - **Part B — Grounded resolution escape hatches (opt-in, LLM-in-the-loop, quote-bounded):**
-  an `OUT_OF_VOCAB` enum sentinel + scoped judge for *present-but-unlisted* values, and a
-  transcribe-list + `count` path for *enumerated-not-totaled* fields. Both are bounded by
-  verbatim evidence (never the raw document) and gated behind their own flags.
+  an `OUT_OF_VOCAB` enum sentinel + scoped judge (**Stage 4c `resolve.py`**, re-map-first-
+  else-free-text) for *present-but-unlisted* values, and a transcribe-list + `count` path for
+  *enumerated-not-totaled* fields. Both are bounded by verbatim evidence (never the raw
+  document) and gated behind their own flags (`OOV_ENABLED`; a per-field `aggregate:` marker).
 
 > Full spec: `specs/2026-07-07-normalization.md` (Part A §1–8, Part B §9–10). Sits **after**
 > the compile phases: it consumes the same `FieldNode`/`ExtractionOutput` structures and
-> needs no re-compile of the sidecar.
+> needs no re-compile of the sidecar. **Delivered on `main` on top of the compiled artifacts**
+> (482 compiled enums), so B.1's `OUT_OF_VOCAB` sentinel is live rather than dormant; B.2 stays
+> inert until a field carries an `aggregate:` marker (like the derivation layer). Pipeline:
+> `extract (3–4) → normalize (4b) → resolve OOV (4c) → derive/reconcile (5+7) → judged (6) →
+> ground (8)`.
 
 ### Part A — Normalization (deterministic value canonicalization) ✅
 
@@ -398,15 +406,17 @@ run; a mandatory bedroom count with no single verbatim span).
 (most schema surgery). Each is independently testable behind its own `*_ENABLED` flag and
 evaluated via `scripts/eval_extraction.py`.
 
-**Exit criteria:** **Part A** — Block 3 emits an `Asset` whose numeric/date fields are
-canonical primitives and whose ambiguous area units are converted to the canonical unit;
-unparseable values are preserved and flagged (never lost); the pass is pure/deterministic
-and adds no LLM cost, and downstream computed derivation/reconcile operate on the normalized
-values. **Part B** — a present-but-unlisted enum value (e.g. heating "Autonomo a gas")
-resolves to a grounded free-text value instead of nulling, with its OOV rate visible in the
-eval harness; an enumerated-not-totaled mandatory count (e.g. bedrooms) is filled
-deterministically from a transcribed item list and no longer routes to `review_queue`. Both
-Part B features are opt-in, evidence-bounded, and independently toggleable.
+**Exit criteria (met):** **Part A** — Block 3 emits an `Asset` whose numeric/date fields are
+canonical primitives; unparseable values are preserved and flagged (never lost); the pass is
+pure/deterministic and adds no LLM cost, and downstream computed derivation/reconcile operate
+on the normalized values. *(mq/ha area-unit conversion deferred — those fields pass through.)*
+**Part B** — a present-but-unlisted enum value (e.g. heating "Autonomo a gas") resolves to a
+grounded value (re-mapped to the closest listed value when one fits, else free-text) instead
+of nulling, with its OOV rate visible in the eval harness; an enumerated-not-totaled mandatory
+count (e.g. bedrooms) is filled deterministically from a transcribed item list and no longer
+routes to `review_queue`. Both Part B features are opt-in, evidence-bounded, and independently
+toggleable. Verified: 306 unit tests (incl. `test_normalize`/`test_resolve`/`test_aggregate`)
+pass; mypy + ruff clean.
 
 ---
 
