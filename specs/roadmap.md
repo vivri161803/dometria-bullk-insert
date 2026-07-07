@@ -420,14 +420,14 @@ pass; mypy + ruff clean.
 
 ---
 
-## ⬜ Phase 7 — FastAPI Synchronous Service
+## ✅ Phase 7 — FastAPI Synchronous Service
 
 **Goal:** Expose the single HTTP endpoint Dometria Connect calls, plus health probes.
 Thin adapter over `pipeline.process_document` (which already never raises and
 returns a structured `PipelineResult`); the API maps its `error.category` to a
 status code and echoes `id`. No pipeline logic moves into the API layer.
 
-- [ ] **Surface mandatory-completeness on `Asset` (small Block 3 change).** The
+- [x] **Surface mandatory-completeness on `Asset` (small Block 3 change).** The
       grounding stage already computes `completeness = mandatory_filled / mandatory_total`
       (`ground.py`) but folds it into `confidence` and discards it. Carry it out:
       `GroundResult.completeness` → `Asset.completeness: float | None` (in `[0.0, 1.0]`,
@@ -435,7 +435,7 @@ status code and echoes `id`. No pipeline logic moves into the API layer.
       `extraction/orchestrator.py`. This is the "percentage of mandatory fields filled
       after extraction" and complements `review_queue` (which lists *which* are missing)
       with a single scalar. Add a unit test in the Block 3 suite; existing tests stay green.
-- [ ] `src/bulk_insert/api/schemas.py` — `ProcessRequest{ id, text }`,
+- [x] `src/bulk_insert/api/schemas.py` — `ProcessRequest{ id, text }`,
       `ProcessResponse{ id, asset, confidence, completeness, _models }`,
       `ErrorResponse{ id, error }`.
       **`asset` is the full Block 3 v2 `Asset`** — its `evidence`, `flags`,
@@ -447,26 +447,26 @@ status code and echoes `id`. No pipeline logic moves into the API layer.
       into `asset`. `_models` mirrors the CLI's block (`{lightweight, heavy, embedding}`
       from `settings.MODEL_LIGHTWEIGHT` / `MODEL_HEAVY` / `EMBEDDING_MODEL`, cf.
       `cli.py:_models_used`) for observability/debugging parity.
-- [ ] `src/bulk_insert/api/routes.py` — `POST /process` (synchronous `def`, runs in the
+- [x] `src/bulk_insert/api/routes.py` — `POST /process` (synchronous `def`, runs in the
       threadpool) → calls `process_document`; `GET /health` (liveness); `GET /ready`
       (readiness — green once models **and offline artifacts** are warmed/valid).
-- [ ] `src/bulk_insert/api/app.py` — FastAPI factory; lifespan warms **(a)** the spaCy
+- [x] `src/bulk_insert/api/app.py` — FastAPI factory; lifespan warms **(a)** the spaCy
       pipeline (`preprocessing._get_nlp`) and embedding model
       (`contract._get_embedding_model(settings.EMBEDDING_MODEL)`), and **(b)** loads +
       validates the offline artifacts Block 3 v2 depends on — the field tree
       (`tree.load_field_tree`), the compiled sidecar (`metadata.load_field_metadata`),
       and topics (via the same load path). A missing/uncompiled artifact should fail
       **readiness**, not the first real request.
-- [ ] Status-code mapping — driven by `PipelineResult.error.category`, not by
+- [x] Status-code mapping — driven by `PipelineResult.error.category`, not by
       re-inspecting exceptions: `200` success (**incl. low confidence _and_ a non-empty
       `review_queue`** — both are successful extractions, surfaced in the body, never a
       non-2xx); `400` `bad_input` (empty/blank text); `422` `unprocessable`
       (`ContractDeterminationError`); `502` `retryable` (transient upstream LLM/network);
       `500` `server` (missing/malformed schema, catch-all). Every body — success or
       error — echoes the `id`.
-- [ ] Concurrency limit — cap per-container in-flight requests (constrained threadpool /
+- [x] Concurrency limit — cap per-container in-flight requests (constrained threadpool /
       single uvicorn worker) so one replica doesn't run many heavy extractions at once.
-- [ ] Unit tests — route tests with `fastapi.testclient` / `httpx`, `process_document`
+- [x] Unit tests — route tests with `fastapi.testclient` / `httpx`, `process_document`
       mocked; assert the full `category → status` mapping and `id` echo; assert a result
       with a populated `review_queue` still returns `200` with the queue nested under
       `asset`; assert `completeness` is present both nested (`asset.completeness`) and

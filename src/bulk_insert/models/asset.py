@@ -16,6 +16,9 @@ class Asset(BaseModel):
         The populated JSON object (schema-compliant dict).
     confidence:
         Model confidence in the extraction, in [0.0, 1.0].
+    completeness:
+        Fraction of mandatory fields that were filled, in [0.0, 1.0].
+        ``None`` for legacy/simple extractions.
     evidence:
         Optional per-field verbatim source quotes (Block 3 v2 tree-driven
         extractor).  ``None`` for legacy/simple extractions.
@@ -30,6 +33,7 @@ class Asset(BaseModel):
     contract_id: str
     data: dict[str, object]
     confidence: float = Field(ge=0.0, le=1.0)
+    completeness: float | None = Field(ge=0.0, le=1.0, default=None)
     evidence: dict[str, str] | None = None
     flags: dict[str, Any] | None = None
     review_queue: list[str] | None = None

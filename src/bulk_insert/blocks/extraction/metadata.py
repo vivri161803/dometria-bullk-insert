@@ -75,7 +75,11 @@ def _parse_aggregate(raw: Any) -> Aggregate | None:
     rule = str(raw.get("rule", "")).strip()
     if not rule:
         return None
-    return Aggregate(rule=rule, item_hint=str(raw.get("item_hint", "")))
+    return Aggregate(
+        rule=rule,
+        item_hint=str(raw.get("item_hint", "")),
+        kind=str(raw.get("kind", "computed")),
+    )
 
 
 class FieldMetadata:
@@ -159,10 +163,13 @@ class FieldMetadata:
         # here when the sidecar didn't spell it out, so a single `aggregate:` key
         # is enough to opt in (the scalar then drops out of extraction).
         if aggregate is not None and derivation is None:
+            kind_enum = (
+                DerivationKind.JUDGED if aggregate.kind == "judged" else DerivationKind.COMPUTED
+            )
             derivation = Derivation(
                 source_fields=(items_field_name(field.name),),
                 rule=aggregate.rule,
-                kind=DerivationKind.COMPUTED,
+                kind=kind_enum,
             )
 
         default = meta.get("default")

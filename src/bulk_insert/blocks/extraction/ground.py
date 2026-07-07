@@ -57,6 +57,7 @@ class GroundResult:
     flags: dict[str, Any] = field(default_factory=dict)
     review_queue: list[str] = field(default_factory=list)
     confidence: float = 0.0
+    completeness: float = 0.0
 
 
 _JUDGE_SYSTEM_PROMPT = (
@@ -207,6 +208,7 @@ def ground_and_assemble(
     passed_count = sum(1 for passed in verdicts.values() if passed)
     grounding = passed_count / len(verdicts) if verdicts else 1.0
     completeness = mandatory_filled / mandatory_total if mandatory_total else 1.0
+    out.completeness = completeness
     out.confidence = max(0.0, min(1.0, grounding * completeness))
 
     logger.info(

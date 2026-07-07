@@ -436,6 +436,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   agriturismo_numero_posti_letto:
     description: Capacità ricettiva totale espressa in numero di posti letto dell'agriturismo.
@@ -448,6 +451,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   agriturismo_occupancy_rate_medio_pct:
     description: Percentuale media di occupazione della struttura agrituristica.
@@ -666,6 +672,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   apartment_numero_camere_da_letto:
     description: Numero totale di camere da letto presenti nell'appartamento.
@@ -678,6 +687,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   apartment_numero_vani:
     description: Numero totale di vani (locali) dell'appartamento.
@@ -690,6 +702,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   apartment_piano:
     description: Numero del piano in cui si trova l'appartamento.
@@ -885,6 +900,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   bakery_pastry_superficie_vendita_mq:
     description: Superficie totale destinata alla vendita espressa in metri quadri.
@@ -1105,6 +1123,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   bar_deposito_magazzino:
     description: Disponibilità di deposito o magazzino presso il bar.
@@ -1213,6 +1234,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   bar_numero_vetrine:
     description: Numero totale di vetrine espositive presenti nell'esercizio.
@@ -1225,6 +1249,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   bar_orari_apertura:
     description: Orari di apertura e chiusura dell'esercizio durante la settimana.
@@ -1249,6 +1276,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   bar_scontrino_medio_eur:
     description: Importo medio in euro per scontrino.
@@ -1273,6 +1303,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   bar_slot_machine_vlt:
     description: Presenza di slot machine o VLT nell'esercizio.
@@ -1432,6 +1465,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   beach_establishment_canone_concessione_annuo_eur:
     description: Importo annuale del canone di concessione demaniale in euro.
@@ -1480,6 +1516,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   beach_establishment_parcheggio_n_posti:
     description: Numero di posti auto disponibili nel parcheggio dello stabilimento.
@@ -1585,6 +1624,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   beauty_numero_clienti_settimana:
     description: Numero medio di clienti serviti settimanalmente.
@@ -1597,6 +1639,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   beauty_reception_sala_attesa:
     description: Presenza di reception e sala d'attesa dedicata.
@@ -1725,6 +1770,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   betting_center_provvigioni_annue_eur:
     description: Importo annuale delle provvigioni percepite dal centro scommesse.
@@ -1762,6 +1810,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   bnb_adr_medio_eur:
     description: Average Daily Rate medio, ovvero il ricavo medio per camera per notte
@@ -1787,6 +1838,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   bnb_colazione_inclusa:
     description: Indica se la colazione è inclusa nella prenotazione del bed and breakfast.
@@ -2053,6 +2107,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   bowling_sala_giochi_biliardi:
     description: Indica se la struttura dispone di sala giochi e biliardi.
@@ -2666,6 +2723,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   businesses_numero_dipendenti:
     description: Numero totale di dipendenti impiegati dall'azienda.
@@ -2678,6 +2738,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   businesses_patrimonio_netto_eur:
     description: Valore del patrimonio netto aziendale espresso in euro.
@@ -2853,6 +2916,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   caf_patronato_pratiche_annue_n:
     description: Numero di pratiche gestite annualmente dalla struttura.
@@ -2865,6 +2931,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   caf_patronato_servizi_offerti:
     description: Tipologie di servizi fiscali e previdenziali offerti dalla struttura.
@@ -2952,6 +3021,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   cafe_laboratorio_pasticceria_interno:
     description: Presenza di laboratorio interno per la produzione di pasticceria.
@@ -2994,6 +3066,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   cafe_numero_vetrine:
     description: Numero di vetrine espositive presenti nell'esercizio.
@@ -3006,6 +3081,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   cafe_posti_a_sedere_interni_n:
     description: Numero di posti a sedere disponibili all'interno dell'esercizio.
@@ -3018,6 +3096,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   cafe_scontrino_medio_eur:
     description: Importo medio dello scontrino in euro.
@@ -3084,6 +3165,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   camping_classificazione_stelle:
     description: Classificazione ufficiale della struttura di campeggio espressa in
@@ -3156,6 +3240,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   camping_piscina:
     description: Indica la presenza di una piscina presso la struttura di campeggio.
@@ -3241,6 +3328,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   car_wash_piste_lavaggio_n:
     description: Numero di piste o corsie dedicate al lavaggio dei veicoli.
@@ -3253,6 +3343,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   car_wash_servizio_detailing_interni:
     description: Disponibilità del servizio di detailing e pulizia degli interni.
@@ -3367,6 +3460,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   car_workshop_ponti_sollevatori_n:
     description: Numero totale di ponti sollevatori disponibili presso l'officina.
@@ -3379,6 +3475,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   car_workshop_servizi_offerti:
     description: Elenco dei servizi di manutenzione e riparazione automobilistica offerti
@@ -3550,6 +3649,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   care_home_posti_letto:
     description: Numero totale di posti letto disponibili nella struttura.
@@ -3574,6 +3676,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   care_home_specializzazioni:
     description: Specializzazioni mediche e tipologie di cura offerte dalla struttura.
@@ -3758,6 +3863,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   castle_numero_camere_vani:
     description: Numero totale di camere e vani presenti nella struttura.
@@ -3770,6 +3878,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   castle_numero_piani_fuori_terra:
     description: Numero di piani costruiti al di sopra del livello del terreno.
@@ -3782,6 +3893,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   castle_numero_piani_interrati:
     description: Numero di piani scavati al di sotto del livello del terreno.
@@ -3794,6 +3908,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   castle_numero_unita_immobiliari_autonome:
     description: Numero di unità immobiliari indipendenti e autonome presenti nella
@@ -3807,6 +3924,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   castle_parco_giardino_storico_ha:
     description: Estensione in ettari del parco o giardino storico annesso alla proprietà.
@@ -3927,6 +4047,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   clothing_e_commerce_attivo:
     description: Indica se l'attività dispone di un canale di vendita online attivo.
@@ -4037,6 +4160,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   commercial_activities_anni_di_attivita:
     description: Numero di anni di attività continuativa dell'esercizio commerciale.
@@ -4204,6 +4330,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   commercial_activities_oggetto_dell_operazione:
     description: Tipologia di operazione commerciale oggetto della transazione.
@@ -4416,6 +4545,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   commercial_shed_climatizzazione:
     description: Presenza di un sistema di climatizzazione/condizionamento dell'aria.
@@ -4459,6 +4591,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   commercial_shed_superficie_coperta_mq:
     description: Metratura totale della superficie coperta della struttura commerciale.
@@ -4590,6 +4725,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   company_agro_food_private_label_pct:
     description: Percentuale di fatturato derivante da prodotti a marchio privato.
@@ -4656,6 +4794,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   company_business_services_contratti_a_lungo_termine_pct_fatturato:
     description: Percentuale del fatturato derivante da contratti a lungo termine.
@@ -4680,6 +4821,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   company_business_services_sedi_operative_n:
     description: Numero di sedi operative e uffici distribuiti sul territorio.
@@ -4692,6 +4836,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   company_business_services_tipologia_servizio:
     description: Categoria principale di servizio offerto dall'azienda.
@@ -4750,6 +4897,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   company_construction_infrastructure_general_contractor:
     description: Indicazione se l'azienda opera come general contractor.
@@ -4990,6 +5140,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   company_environment_circular_esg_tipologia_contratti:
     description: 'Classificazione della tipologia di clientela servita: pubblica amministrazione,
@@ -5091,6 +5244,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   company_healthcare_personal_services_pct_fatturato_da_ssn:
     description: Percentuale del fatturato annuale derivante da prestazioni erogate
@@ -5129,6 +5285,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   company_healthcare_personal_services_specializzazioni_offerte:
     description: Tipologie di specializzazioni mediche e servizi sanitari offerti dalla
@@ -5176,6 +5335,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   company_hospitality_tourism_classificazione_media_stelle:
     description: Classificazione media della struttura espressa in stelle.
@@ -5272,6 +5434,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   company_ict_media_technology_certificazioni:
     description: Certificazioni di sicurezza, conformità e qualità possedute dall'azienda.
@@ -5382,6 +5547,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   company_ict_media_technology_tipologia:
     description: Categoria di business dell'azienda ICT, media o tecnologia.
@@ -5411,6 +5579,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   company_industry_manufacturing_capacita_produttiva_unita_anno_o_ton_anno:
     description: Capacità produttiva annuale espressa in unità o tonnellate.
@@ -5533,6 +5704,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   company_industry_manufacturing_r_d_interna:
     description: Indicazione se l'azienda dispone di un'unità interna di ricerca e sviluppo.
@@ -5661,6 +5835,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   company_logistics_transport_spedizioni_anno:
     description: Numero medio di spedizioni gestite annualmente.
@@ -5734,6 +5911,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   company_retail_distribution_magazzini_centri_distribuzione_n:
     description: Numero totale di magazzini e centri di distribuzione gestiti dall'azienda.
@@ -5746,6 +5926,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   company_retail_distribution_pct_fatturato_online:
     description: Percentuale del fatturato totale generato dalle vendite online.
@@ -5783,6 +5966,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   company_retail_distribution_superficie_vendita_totale_mq:
     description: Superficie totale destinata alla vendita espressa in metri quadri.
@@ -6046,6 +6232,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   convent_superficie_coperta_mq:
     description: Superficie coperta dell'immobile conventuale espressa in metri quadri.
@@ -6165,6 +6354,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   craft_shed_portone_industriale_dimensioni:
     description: Dimensioni del portone industriale espresse in metri.
@@ -6348,6 +6540,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   dealership_vendite_anno_n:
     description: Numero di veicoli venduti dalla concessionaria nell'anno.
@@ -6360,6 +6555,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   directional_building_area_esterna_giardino:
     description: Indica la presenza di aree esterne o giardini nella struttura direzionale.
@@ -6387,6 +6585,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   directional_building_certificazioni_leed_breeam:
     description: Certificazioni di sostenibilità ambientale possedute dall'edificio
@@ -6444,6 +6645,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   directional_building_numero_unita_piani_indipendenti:
     description: Numero di unità immobiliari o piani indipendenti presenti nell'edificio.
@@ -6456,6 +6660,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   directional_building_occupancy_rate_pct:
     description: Percentuale di occupazione dell'edificio rispetto alla capacità totale.
@@ -6480,6 +6687,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   directional_building_reception_hall:
     description: Indica la presenza di una reception o hall d'ingresso nell'edificio.
@@ -6600,6 +6810,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   escape_room_prezzo_medio_per_persona_eur:
     description: Prezzo medio per persona in euro per una sessione di escape room.
@@ -6625,6 +6838,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   escape_room_superficie_mq:
     description: Superficie totale della struttura di escape room espressa in metri
@@ -6747,6 +6963,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   farmhouse_numero_camere:
     description: Numero totale di camere da letto presenti nella proprietà.
@@ -6759,6 +6978,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   farmhouse_oliveto_n_piante_o_ha:
     description: Superficie dell'oliveto in ettari oppure numero di piante di olivo
@@ -6878,6 +7100,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   footwear_e_commerce_attivo:
     description: Presenza di un canale di vendita online attivo.
@@ -6987,6 +7212,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   gaming_hall_aggio_annuo_gioco_eur:
     description: Importo annuale dell'aggio (commissione) derivante dall'attività di
@@ -7028,6 +7256,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   gaming_hall_slot_vlt_n:
     description: Numero di slot machine e VLT (videoterminali di gioco) installati nella
@@ -7041,6 +7272,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   gaming_hall_superficie_mq:
     description: Superficie in metri quadri della sala giochi.
@@ -7094,6 +7328,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   garage_impianto_antincendio:
     description: Indica la presenza di un impianto antincendio nella struttura di parcheggio.
@@ -7121,6 +7358,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   garage_numero_posti_auto:
     description: Numero totale di posti auto disponibili nella struttura.
@@ -7133,6 +7373,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   garage_occupancy_rate_pct:
     description: Percentuale di occupazione dei posti auto rispetto alla capacità totale.
@@ -7402,6 +7645,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   guest_rooms_colazione_inclusa:
     description: Indicazione se la colazione è inclusa nella tariffa della camera.
@@ -7537,6 +7783,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   gym_fitness_area_wellness_sauna:
     description: Disponibilità di area wellness e/o sauna presso la struttura.
@@ -7642,6 +7891,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   gym_fitness_spogliatoi_n:
     description: Numero totale di spogliatoi presenti nella struttura fitness.
@@ -7654,6 +7906,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   gym_fitness_superficie_mq:
     description: Superficie totale della struttura fitness espressa in metri quadri.
@@ -7723,6 +7978,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   hairdresser_numero_clienti_giorno_medio:
     description: Numero medio di clienti serviti in una giornata lavorativa.
@@ -7735,6 +7993,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   hairdresser_postazioni_lavoro_n:
     description: Numero totale di postazioni di lavoro disponibili nella struttura.
@@ -7747,6 +8008,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   hairdresser_scontrino_medio_eur:
     description: Importo medio dello scontrino in euro presso il salone.
@@ -7903,6 +8167,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   holiday_village_piscine_n:
     description: Numero di piscine presenti nella struttura del villaggio turistico.
@@ -7915,6 +8182,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   holiday_village_posti_auto:
     description: Numero di posti auto disponibili per il parcheggio nel villaggio turistico.
@@ -8095,6 +8365,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   hostel_cucina_comune:
     description: Disponibilità di cucina ad uso comune per gli ospiti.
@@ -8304,6 +8577,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   hotel_numero_dipendenti:
     description: Numero totale di dipendenti impiegati presso la struttura alberghiera.
@@ -8316,6 +8592,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   hotel_numero_piani:
     description: Numero di piani della struttura alberghiera.
@@ -8328,6 +8607,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   hotel_numero_posti_letto:
     description: Numero totale di posti letto disponibili nella struttura.
@@ -8340,6 +8622,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   hotel_occupancy_rate_medio_pct:
     description: Percentuale media di occupazione delle camere nel periodo considerato.
@@ -8516,6 +8801,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   ice_cream_laboratorio_produzione_mq:
     description: Superficie in metri quadri del laboratorio di produzione del gelato.
@@ -8675,6 +8963,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   industrial_shed_cabina_mt_bt:
     description: Disponibilità di cabina di trasformazione media tensione / bassa tensione.
@@ -8840,6 +9131,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   industrial_shed_parcheggi_n:
     description: Numero di posti auto disponibili presso la struttura industriale.
@@ -8852,6 +9146,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   industrial_shed_portata_pavimento_kg_mq:
     description: Capacità di carico massimo del pavimento espressa in chilogrammi per
@@ -8918,6 +9215,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   industrial_shed_struttura_portante_tipo:
     description: Tipologia costruttiva della struttura portante dell'edificio industriale.
@@ -9001,6 +9301,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   insurance_agency_portafoglio_premi_annui_eur:
     description: Importo totale dei premi annui del portafoglio assicurativo in euro.
@@ -9040,6 +9343,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   insurance_agency_superficie_mq:
     description: Superficie in metri quadri della sede dell'agenzia assicurativa.
@@ -9193,6 +9499,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   jewelry_videosorveglianza:
     description: Disponibilità di un sistema di videosorveglianza per il monitoraggio
@@ -9351,6 +9660,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   laundry_clientela_business_hotel_ristoranti:
     description: Indicazione della presenza di clientela business proveniente da hotel
@@ -9379,6 +9691,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   laundry_servizio_ritiro_consegna:
     description: Indica se la lavanderia offre il servizio di ritiro e consegna della
@@ -9531,6 +9846,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   logistics_shed_cella_frigorifera:
     description: Presenza di celle frigorifere per la conservazione di merci a temperatura
@@ -9670,6 +9988,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   logistics_shed_potenza_elettrica_kw:
     description: Capacità di potenza elettrica disponibile presso la struttura, espressa
@@ -9695,6 +10016,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   logistics_shed_scaffalature_si_no_tipo:
     description: Presenza di scaffalature e relativa tipologia di sistema di stoccaggio.
@@ -9888,6 +10212,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   multi_specialist_medical_center_convenzioni:
     description: Tipologie di convenzioni stipulate per l'accesso ai servizi medici.
@@ -9936,6 +10263,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   multi_specialist_medical_center_parcheggio:
     description: Disponibilità di parcheggio presso il centro medico.
@@ -10074,6 +10404,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   nail_center_scontrino_medio_eur:
     description: Importo medio dello scontrino in euro presso il centro unghie.
@@ -10343,6 +10676,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   office_unit_parcheggi_n:
     description: Numero totale di posti auto disponibili presso la struttura dell'ufficio.
@@ -10355,6 +10691,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   office_unit_pavimento_sopraelevato:
     description: Indica se l'unità ufficio è dotata di pavimento sopraelevato.
@@ -10424,6 +10763,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   office_unit_servizi_accessori:
     description: Servizi accessori disponibili presso l'unità ufficio o l'edificio.
@@ -10523,6 +10865,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   optician_sala_refrazione_esami_vista:
     description: Indica se l'ottica dispone di una sala dedicata alla refrazione e agli
@@ -10592,6 +10937,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   outlet_park_accessibilita_autostrada_ferrovia:
     description: Descrizione dell'accessibilità del parco outlet rispetto alle principali
@@ -10642,6 +10990,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   outlet_park_occupancy_rate_pct:
     description: Percentuale di occupazione delle unità commerciali nel parco outlet.
@@ -10666,6 +11017,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   outlet_park_reddito_locativo_annuo_eur:
     description: Reddito annuale generato dai contratti di locazione nel parco outlet,
@@ -10760,6 +11114,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   palace_cortile_interno:
     description: Indica la presenza di un cortile interno nella proprietà.
@@ -10799,6 +11156,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   palace_giardino_terrazza_mq:
     description: Superficie in metri quadri di giardino o terrazza annessa alla proprietà.
@@ -10823,6 +11183,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   palace_numero_unita_immobiliari:
     description: Numero complessivo di unità immobiliari (appartamenti, negozi, uffici)
@@ -10836,6 +11199,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   palace_numero_vani_complessivi:
     description: Numero totale di vani (stanze) in tutte le unità immobiliari del palazzo.
@@ -10848,6 +11214,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   palace_occupancy_rate_pct:
     description: Percentuale di occupazione o affittanza del palazzo rispetto alla capacità
@@ -11017,6 +11386,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   penthouse_ascensore:
     description: Presenza di un ascensore nella struttura della penthouse.
@@ -11119,6 +11491,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   penthouse_numero_camere_da_letto:
     description: Numero totale di camere da letto presenti nella proprietà.
@@ -11131,6 +11506,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   penthouse_numero_vani:
     description: Numero totale di vani (locali) presenti nella proprietà.
@@ -11143,6 +11521,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   penthouse_piscina_condominiale:
     description: Indica la presenza di una piscina a uso condominiale.
@@ -11185,6 +11566,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   penthouse_spese_condominiali_annue_eur:
     description: Importo annuale delle spese condominiali in euro.
@@ -11281,6 +11665,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   perfumery_segmento:
     description: Segmento di mercato in cui opera l'attività commerciale.
@@ -11332,6 +11719,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   pharmacy_cabina_estetica:
     description: Presenza di una cabina estetica dedicata presso la farmacia.
@@ -11427,6 +11817,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   pharmacy_sede_succursale:
     description: Classificazione della farmacia come sede principale o succursale.
@@ -11600,6 +11993,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   physiotherapy_center_apparecchiature_elettromedicali:
     description: Disponibilità di apparecchiature elettromedicali presso il centro di
@@ -11643,6 +12039,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   physiotherapy_center_palestra_riabilitativa:
     description: Disponibilità di palestra riabilitativa presso il centro di fisioterapia.
@@ -11670,6 +12069,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   physiotherapy_center_specializzazioni:
     description: Tipologie di specializzazioni fisioterapiche offerte dal centro.
@@ -11785,6 +12187,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   pizzeria_numero_coperti_interni:
     description: Numero di posti a sedere disponibili all'interno della struttura.
@@ -11797,6 +12202,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   pizzeria_scontrino_medio_eur:
     description: Importo medio dello scontrino in euro per cliente.
@@ -11821,6 +12229,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   pizzeria_servizio_asporto_delivery_pct:
     description: Percentuale di fatturato derivante da servizio di asporto e consegna
@@ -11858,6 +12269,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   private_school_courses_certificazioni_rilasciate:
     description: Indica se la scuola privata rilascia certificazioni ufficiali ai propri
@@ -11901,6 +12315,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   private_school_courses_iscritti_attivi_n:
     description: Numero totale di studenti attualmente iscritti e frequentanti la scuola
@@ -11914,6 +12331,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   private_school_courses_superficie_mq:
     description: Superficie totale in metri quadri occupata dalla struttura scolastica.
@@ -12172,6 +12592,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   public_office_parcheggi_n:
     description: Numero di posti auto disponibili presso l'immobile.
@@ -12184,6 +12607,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   public_office_superficie_mq:
     description: Superficie totale dell'immobile espressa in metri quadri.
@@ -12208,6 +12634,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   real_estate_agency_database_clienti_n_contatti:
     description: Numero di contatti presenti nel database clienti dell'agenzia.
@@ -12232,6 +12661,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   real_estate_agency_network_franchising_affiliato:
     description: Indicazione se l'agenzia è affiliata a un network o franchising.
@@ -12461,6 +12893,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   residence_occupancy_rate_pct:
     description: Percentuale di occupazione delle unità abitative nella residenza.
@@ -12485,6 +12920,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   residence_piscina:
     description: Presenza o assenza di piscina nella residenza.
@@ -12691,6 +13129,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   restaurant_numero_coperti_giorno_medio:
     description: Numero medio di coperti serviti in un giorno di attività ordinaria.
@@ -12703,6 +13144,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   restaurant_numero_coperti_interni:
     description: Capacità di posti a sedere disponibili all'interno della sala del ristorante.
@@ -12715,6 +13159,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   restaurant_parcheggio_clienti:
     description: Disponibilità di parcheggio dedicato ai clienti della struttura.
@@ -12757,6 +13204,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   restaurant_scontrino_medio_eur:
     description: Importo medio dello scontrino per cliente espresso in euro.
@@ -12781,6 +13231,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   restaurant_servizio_delivery_asporto:
     description: Disponibilità di servizio di consegna a domicilio o ritiro in asporto.
@@ -12873,6 +13326,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   retail_financial_services_servizi_offerti:
     description: Tipologie di servizi finanziari offerti al cliente.
@@ -12976,6 +13432,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   retail_park_occupancy_rate_pct:
     description: Percentuale di occupazione delle unità commerciali nel retail park.
@@ -13000,6 +13459,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   retail_park_reddito_locativo_annuo_eur:
     description: Reddito annuale generato dai canoni di locazione delle unità commerciali,
@@ -13131,6 +13593,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   senior_living_posti_letto_unita_abitative:
     description: Numero complessivo di posti letto o unità abitative disponibili nella
@@ -13311,6 +13776,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   shop_passo_carraio:
     description: Indica la presenza o assenza di un passo carraio (accesso veicolare)
@@ -13340,6 +13808,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   shop_superficie_magazzino_retro_mq:
     description: Misura in metri quadri la superficie del magazzino o dello spazio retro
@@ -13538,6 +14009,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   shopping_center_numero_piani_commerciali:
     description: Numero di livelli destinati ad attività commerciale all'interno del
@@ -13551,6 +14025,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   shopping_center_occupancy_rate_pct:
     description: Percentuale di unità commerciali occupate rispetto al totale disponibile.
@@ -13575,6 +14052,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   shopping_center_reddito_locativo_annuo_eur:
     description: Importo annuale totale dei canoni di locazione percepiti dal centro
@@ -13644,6 +14124,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   sports_complex_bar_ristoro:
     description: Indica la presenza o assenza di un bar o servizio di ristoro presso
@@ -13745,6 +14228,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   sports_complex_piscina:
     description: Indica la presenza o assenza di una piscina presso il complesso sportivo.
@@ -13772,6 +14258,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   sports_complex_superficie_complessiva_mq_o_ha:
     description: Superficie totale del complesso sportivo espressa in metri quadri o
@@ -13798,6 +14287,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   student_housing_canone_medio_per_posto_letto_eur_mese:
     description: Importo medio mensile in euro addebitato per ogni posto letto nella
@@ -14009,6 +14501,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   tire_center_superficie_mq:
     description: Superficie totale del centro espressa in metri quadri.
@@ -14263,6 +14758,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   trattoria_osteria_numero_coperti_giorno_medio:
     description: Numero medio di coperti serviti in una giornata tipo.
@@ -14275,6 +14773,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   trattoria_osteria_parcheggio:
     description: Disponibilità di posti auto per il parcheggio della clientela.
@@ -14373,6 +14874,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   travel_agency_postazioni_operative_n:
     description: Numero di postazioni operative (sportelli) presso l'agenzia di viaggi.
@@ -14385,6 +14889,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   travel_agency_specializzazione:
     description: Tipologia di specializzazione dell'agenzia di viaggi tra corporate,
@@ -14485,6 +14992,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   villa_giardino_mq:
     description: Superficie del giardino espressa in metri quadri.
@@ -14556,6 +15066,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   villa_numero_camere_da_letto:
     description: Numero totale di camere da letto presenti nella villa.
@@ -14568,6 +15081,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   villa_numero_piani:
     description: Numero di piani di cui è composta la villa.
@@ -14580,6 +15096,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   villa_piscina:
     description: Presenza o assenza di una piscina nella villa.
@@ -14625,7 +15144,8 @@ fields:
     unsure: false
   # TODO: human-confirm topic/priority
   villa_superficie_terreno_mq:
-    description: Superficie totale del terreno della villa espressa in metri quadri, considerando giardino, parco, orto e appezzamenti di terra.
+    description: Superficie totale del terreno della villa espressa in metri quadri,
+      considerando giardino, parco, orto e appezzamenti di terra.
     topic: 1
     mandatory: true
     priority: 5
@@ -14718,6 +15238,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   warehouse_impianto_antincendio:
     description: Presenza di impianto antincendio nella struttura di magazzino.
@@ -14918,6 +15441,9 @@ fields:
       values: []
     derivation: null
     unsure: false
+    aggregate:
+      rule: count
+      kind: judged
   # TODO: human-confirm topic/priority
   wine_bar_superficie_vendita_sala_mq:
     description: Metratura della zona di vendita e sala destinata ai clienti.

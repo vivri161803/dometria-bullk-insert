@@ -556,6 +556,9 @@ class TestExtractAsset:
                 return GroundingReport(
                     assessments=[FieldAssessment(field=n, passed=True) for n in names]
                 )
+            # Support derive_judged models
+            if "justification" in rm.model_fields:
+                return rm(value=None, justification="dummy justification")
             # A group model: fill only the required 'name' field, abstain the rest.
             payload: dict[str, Any] = {}
             if "name" in rm.model_fields:
@@ -594,8 +597,27 @@ class TestExtractAsset:
             rm = kw["response_model"]
             if rm is GroundingReport:
                 return GroundingReport(assessments=[])
+            if "justification" in rm.model_fields:
+                return rm(value=None, justification="abstain")
             return rm()  # all defaults (None)
 
         asset = extract_asset([_chunk()], _restaurant_contract(), client=FakeLLM(handler))
         assert asset.review_queue is not None
         assert "name" in asset.review_queue
+
+
+def test_completeness_calculation() -> None:
+    """T15 — completeness wired from grounding."""
+    # 3 mandatory fields, 2 filled
+    nodes = [
+        _node(name="a", mandatory=True),
+        _node(name="b", mandatory=True),
+        _node(name="c", mandatory=True),
+    ]
+    out = ExtractionOutput(values={"a": "val", "b": "val"})  # c is missing
+
+    result = ground_and_assemble([_chunk(text="hello")], out, nodes, run_judge=False)
+
+    # 2 / 3 = 0.6666...
+    assert abs(result.completeness - 0.6666666666666666) < 1e-9
+    assert result.review_queue == ["c"]

@@ -241,7 +241,13 @@ def _judge_response_model(node: FieldNode) -> type[BaseModel]:
 
 
 def _primitives_prompt(node: FieldNode, result: ExtractionOutput) -> str:
-    lines = [f"Derive the field '{node.name}' ({node.prompt_context}).", "", "Primitives:"]
+    lines = [f"Derive the field '{node.name}' ({node.prompt_context})."]
+    if node.derivation and node.derivation.rule == "count":
+        lines.append(
+            "Count the number of distinct items mentioned in the list below "
+            "considering only the given group of sentences."
+        )
+    lines.extend(["", "Primitives:"])
     for sf in node.derivation.source_fields if node.derivation else ():
         value = result.values.get(sf)
         quote = result.quotes.get(sf)
@@ -270,11 +276,17 @@ def derive_judged(
         high_value = node.mandatory and node.priority >= effective_cfg.HIGH_PRIORITY
         n = max(1, effective_cfg.SELF_CONSISTENCY_N) if high_value else 1
 
+        target_model = (
+            effective_cfg.MODEL_LIGHTWEIGHT
+            if node.derivation and node.derivation.rule == "count"
+            else effective_cfg.MODEL_HEAVY
+        )
+
         votes: list[Any] = []
         justification: str | None = None
         for _ in range(n):
             response: Any = llm.chat.completions.create(
-                model=effective_cfg.MODEL_HEAVY,
+                model=target_model,
                 response_model=model,
                 max_retries=3,
                 messages=[

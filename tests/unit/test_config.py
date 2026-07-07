@@ -20,14 +20,6 @@ class TestSettingsDefaults:
         s = Settings(_env_file=None)
         assert s.MODEL_HEAVY == "openai/gpt-4o"
 
-    def test_default_redis_url(self) -> None:
-        s = Settings(_env_file=None)
-        assert s.REDIS_URL == "redis://localhost:6379/0"
-
-    def test_default_database_url(self) -> None:
-        s = Settings(_env_file=None)
-        assert "dometria_bulk" in s.DATABASE_URL
-
     def test_default_chunk_size(self) -> None:
         s = Settings(_env_file=None)
         assert s.CHUNK_SIZE == 6
@@ -64,17 +56,6 @@ class TestSettingsFromEnv:
         monkeypatch.setenv("CHUNK_OVERLAP", "3")
         s = Settings(_env_file=None)
         assert s.CHUNK_OVERLAP == 3
-
-    def test_redis_url_from_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setenv("REDIS_URL", "redis://myhost:6380/1")
-        s = Settings(_env_file=None)
-        assert s.REDIS_URL == "redis://myhost:6380/1"
-
-    def test_database_url_from_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        custom = "postgresql+asyncpg://user:pass@db:5432/mydb"
-        monkeypatch.setenv("DATABASE_URL", custom)
-        s = Settings(_env_file=None)
-        assert s.DATABASE_URL == custom
 
     def test_extra_env_vars_ignored(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("SOME_UNKNOWN_VAR", "whatever")

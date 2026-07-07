@@ -79,6 +79,7 @@ class Aggregate:
 
     rule: str
     item_hint: str = ""
+    kind: str = "computed"
 
 
 @dataclass(frozen=True)

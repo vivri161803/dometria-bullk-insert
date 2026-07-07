@@ -120,6 +120,7 @@ def extract_asset(
         contract_id=contract_id,
         data=grounded.record,
         confidence=grounded.confidence,
+        completeness=grounded.completeness,
         evidence=grounded.evidence or None,
         flags=grounded.flags or None,
         review_queue=grounded.review_queue or None,

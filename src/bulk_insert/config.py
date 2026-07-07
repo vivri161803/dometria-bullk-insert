@@ -48,12 +48,6 @@ class Settings(BaseSettings):
     OPENROUTER_ALLOW_FALLBACKS: bool = False
     OPENROUTER_REQUIRE_PARAMETERS: bool = True
 
-    # Queue / Redis
-    REDIS_URL: str = "redis://localhost:6379/0"
-
-    # Database
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/dometria_bulk"
-
     # Chunking parameters
     CHUNK_SIZE: int = 6  # sentences per chunk
     CHUNK_OVERLAP: int = 2  # overlapping sentences between consecutive chunks

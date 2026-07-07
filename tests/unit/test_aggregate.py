@@ -182,3 +182,18 @@ class TestEndToEnd:
             client=FakeLLM(lambda _k: GroundingReport(assessments=[])),
         )
         assert node.name in res.review_queue  # mandatory + null → review
+
+    def test_aggregate_judged_parsed(self) -> None:
+        raw = {
+            "name": "rooms",
+            "field_type": "integer",
+            "aggregate": {"rule": "count", "kind": "judged"},
+        }
+        meta = FieldMetadata.from_mapping({raw["name"]: raw})
+        field = TreeField("rooms", "Rooms", "integer", True, "custom_fields")
+        node = enrich([field], ("a", "b", "c"), metadata=meta)[0]
+        d = node.derivation
+        assert d is not None
+        assert d.kind == DerivationKind.JUDGED
+        assert d.rule == "count"
+        assert d.source_fields == ("rooms__items",)
