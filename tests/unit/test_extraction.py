@@ -364,6 +364,46 @@ class TestComputedDerivation:
         derive_computed(out, [node])
         assert out.values["r"] == 2.5
 
+    def test_mean_rule(self) -> None:
+        out = ExtractionOutput(values={"a": 3, "b": 4, "c": 5})
+        node = _node("m", derivation=Derivation(("a", "b", "c"), "mean", DerivationKind.COMPUTED))
+        derive_computed(out, [node])
+        assert out.values["m"] == 4.0
+
+    def test_percent_rule(self) -> None:
+        out = ExtractionOutput(values={"part": 30, "whole": 120})
+        node = _node(
+            "pct", derivation=Derivation(("part", "whole"), "percent", DerivationKind.COMPUTED)
+        )
+        derive_computed(out, [node])
+        assert out.values["pct"] == 25.0
+
+    def test_percent_zero_whole_yields_none(self) -> None:
+        out = ExtractionOutput(values={"part": 30, "whole": 0})
+        node = _node(
+            "pct", derivation=Derivation(("part", "whole"), "percent", DerivationKind.COMPUTED)
+        )
+        derive_computed(out, [node])
+        assert out.values["pct"] is None
+
+    def test_ha_to_mq_rule(self) -> None:
+        out = ExtractionOutput(values={"ha": 2.5})
+        node = _node("mq", derivation=Derivation(("ha",), "ha_to_mq", DerivationKind.COMPUTED))
+        derive_computed(out, [node])
+        assert out.values["mq"] == 25_000.0
+
+    def test_mq_to_ha_rule(self) -> None:
+        out = ExtractionOutput(values={"mq": 15_000})
+        node = _node("ha", derivation=Derivation(("mq",), "mq_to_ha", DerivationKind.COMPUTED))
+        derive_computed(out, [node])
+        assert out.values["ha"] == 1.5
+
+    def test_unit_conversion_bad_arity_yields_none(self) -> None:
+        out = ExtractionOutput(values={"a": 1, "b": 2})
+        node = _node("mq", derivation=Derivation(("a", "b"), "ha_to_mq", DerivationKind.COMPUTED))
+        derive_computed(out, [node])
+        assert out.values["mq"] is None
+
     def test_unknown_rule_flags_error(self) -> None:
         out = ExtractionOutput(values={"a": 1})
         node = _node("x", derivation=Derivation(("a",), "bogus", DerivationKind.COMPUTED))
@@ -417,32 +457,32 @@ class TestJudgedDerivation:
 
 
 class TestGroundAndAssemble:
-    def _report(self, scores: dict[str, float]) -> Any:
+    def _report(self, verdicts: dict[str, bool]) -> Any:
         def handler(_kw: dict[str, Any]) -> BaseModel:
             return GroundingReport(
-                assessments=[FieldAssessment(field=k, score=v) for k, v in scores.items()]
+                assessments=[FieldAssessment(field=k, passed=v) for k, v in verdicts.items()]
             )
 
         return FakeLLM(handler)
 
-    def test_gate_nulls_below_threshold(self) -> None:
+    def test_gate_nulls_when_not_passed(self) -> None:
         out = ExtractionOutput(values={"name": "Mario"}, quotes={"name": "Ristorante Mario"})
         node = _node("name")
         res = ground_and_assemble(
-            [_chunk()], out, [node], _cfg(JUDGE_THRESHOLD=0.7), client=self._report({"name": 0.2})
+            [_chunk()], out, [node], _cfg(), client=self._report({"name": False})
         )
         assert res.record["name"] is None
-        assert "ungrounded" in res.flags["name"]
+        assert res.flags["name"]["ungrounded"] is True
 
-    def test_gate_keeps_above_threshold(self) -> None:
+    def test_gate_keeps_when_passed(self) -> None:
         out = ExtractionOutput(values={"name": "Mario"}, quotes={"name": "Ristorante Mario"})
         node = _node("name")
         res = ground_and_assemble(
-            [_chunk()], out, [node], _cfg(JUDGE_THRESHOLD=0.7), client=self._report({"name": 0.95})
+            [_chunk()], out, [node], _cfg(), client=self._report({"name": True})
         )
         assert res.record["name"] == "Mario"
         assert res.evidence["name"] == "Ristorante Mario"
-        assert res.flags["name"]["grounding"] == 0.95
+        assert res.flags["name"]["grounding"] is True
 
     def test_completeness_routes_to_review_queue(self) -> None:
         out = ExtractionOutput(values={"name": None})
@@ -479,7 +519,7 @@ class TestExtractAsset:
                 ]
                 names = [line[2:].split(":", 1)[0] for line in fields]
                 return GroundingReport(
-                    assessments=[FieldAssessment(field=n, score=0.95) for n in names]
+                    assessments=[FieldAssessment(field=n, passed=True) for n in names]
                 )
             # A group model: fill only the required 'name' field, abstain the rest.
             payload: dict[str, Any] = {}

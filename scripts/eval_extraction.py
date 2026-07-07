@@ -13,6 +13,10 @@ the runs that agree on the modal contract, reports per-field:
 The aggregate **field-level agreement** is the mean per-field agreement — the
 number to watch fall as the extractor becomes more reproducible.
 
+It also reports the **chosen contract** (Block 2) with its run distribution, and a
+two-column **extracted / unextracted** split of the product's fields (by modal value
+over the runs that agree on the contract).
+
 Diagnostic tool, not a test: it makes real LLM calls and needs
 ``OPENROUTER_API_KEY`` set (via ``.env`` or the environment).
 
@@ -63,27 +67,77 @@ def _modal_contract(assets: list[Asset]) -> str | None:
     return str(Counter(a.contract_id for a in assets).most_common(1)[0][0])
 
 
-def _per_field_metrics(assets: list[Asset]) -> dict[str, dict[str, float]]:
+def _modal_value(assets: list[Asset], key: str) -> Any:
+    """The most common (real) value of *key* across *assets*."""
+    values = [a.data.get(key) for a in assets]
+    top_hashable, _ = Counter(_hashable(v) for v in values).most_common(1)[0]
+    for v in values:
+        if _hashable(v) == top_hashable:
+            return v
+    return None
+
+
+def _extracted_split(assets: list[Asset], field_keys: list[str]) -> tuple[list[str], list[str]]:
+    """Split fields by whether their modal value across *assets* is populated.
+
+    A field counts as **extracted** when its most common value over the runs is
+    non-null; otherwise it is **unextracted** (the extractor abstains most often).
+    """
+    extracted: list[str] = []
+    unextracted: list[str] = []
+    for key in field_keys:
+        (extracted if _modal_value(assets, key) is not None else unextracted).append(key)
+    return extracted, unextracted
+
+
+# Positive pass-marker flags that aren't problems and would only add noise to the
+# flag breakdown (e.g. the grounding gate's "this field passed" marker).
+_POSITIVE_FLAGS = {"grounding"}
+
+
+def _per_field_metrics(assets: list[Asset]) -> dict[str, dict[str, Any]]:
     n = len(assets)
     keys: set[str] = set()
     for a in assets:
         keys.update(a.data)
 
-    metrics: dict[str, dict[str, float]] = {}
+    metrics: dict[str, dict[str, Any]] = {}
     for key in sorted(keys):
         values = [a.data.get(key) for a in assets]
         counts = Counter(_hashable(v) for v in values)
-        _, top = counts.most_common(1)[0]
+        top_hashable, top = counts.most_common(1)[0]
         nulls = sum(1 for v in values if v is None)
         populated_without_quote = sum(
             1 for a in assets if a.data.get(key) is not None and key not in (a.evidence or {})
         )
         reviewed = sum(1 for a in assets if key in (a.review_queue or []))
+
+        # Modal value + the evidence quote from the run that produced it.
+        modal_value: Any = None
+        modal_quote: str | None = None
+        for a in assets:
+            if _hashable(a.data.get(key)) == top_hashable:
+                modal_value = a.data.get(key)
+                modal_quote = (a.evidence or {}).get(key)
+                break
+
+        # Per-flag-type tally across runs (ungrounded / voting / reconcile / ...).
+        flag_counter: Counter[str] = Counter()
+        for a in assets:
+            field_flags = (a.flags or {}).get(key) or {}
+            for ftype in field_flags:
+                if ftype in _POSITIVE_FLAGS:
+                    continue
+                flag_counter[ftype] += 1
+
         metrics[key] = {
             "agreement": top / n,
             "abstention": nulls / n,
             "hallucination": populated_without_quote / n,
             "review_rate": reviewed / n,
+            "modal_value": modal_value,
+            "modal_quote": modal_quote,
+            "flags": dict(flag_counter),
         }
     return metrics
 
@@ -92,6 +146,7 @@ def _summarise(assets: list[Asset]) -> dict[str, Any]:
     modal = _modal_contract(assets)
     agreeing = [a for a in assets if a.contract_id == modal]
     field_metrics = _per_field_metrics(agreeing)
+    extracted, unextracted = _extracted_split(agreeing, list(field_metrics))
     mean_agreement = (
         sum(m["agreement"] for m in field_metrics.values()) / len(field_metrics)
         if field_metrics
@@ -105,28 +160,75 @@ def _summarise(assets: list[Asset]) -> dict[str, Any]:
     return {
         "runs": len(assets),
         "modal_contract": modal,
+        "contract_distribution": dict(Counter(a.contract_id for a in assets)),
         "runs_on_modal_contract": len(agreeing),
         "schema_stability": len(agreeing) / len(assets) if assets else 0.0,
         "field_level_agreement": mean_agreement,
         "mean_hallucination_rate": mean_hallucination,
+        "extracted_fields": extracted,
+        "unextracted_fields": unextracted,
         "fields": field_metrics,
     }
 
 
+def _fmt_value(value: Any, width: int = 40) -> str:
+    """Compact one-line rendering of a field's modal value for the table."""
+    if value is None:
+        return "-"
+    text = str(value).replace("\n", " ")
+    return text if len(text) <= width else text[: width - 1] + "…"
+
+
+def _print_two_columns(left: list[str], right: list[str]) -> None:
+    """Print two field lists side by side (extracted | unextracted)."""
+    width = 45
+    left_head = f"EXTRACTED ({len(left)})"
+    right_head = f"UNEXTRACTED ({len(right)})"
+    print(f"  {left_head:{width}s} | {right_head}")
+    print(f"  {'-' * width} | {'-' * width}")
+    for i in range(max(len(left), len(right))):
+        lcell = left[i] if i < len(left) else ""
+        rcell = right[i] if i < len(right) else ""
+        print(f"  {lcell[:width]:{width}s} | {rcell[:width]}")
+
+
 def _print_human(summary: dict[str, Any]) -> None:
-    print(f"\nRuns: {summary['runs']}  modal contract: {summary['modal_contract']}")
+    print(f"\nRuns: {summary['runs']}")
+
+    # Block 2 — the contract chosen after preprocessing.
+    print(f"\nChosen contract (Block 2): {summary['modal_contract']}")
+    dist = summary["contract_distribution"]
+    if len(dist) > 1:
+        print("  contract distribution across runs:")
+        for cid, count in sorted(dist.items(), key=lambda kv: -kv[1]):
+            print(f"    {cid:40s} {count}/{summary['runs']}")
     print(
-        f"Schema stability: {summary['schema_stability']:.2%}  "
+        f"  schema stability: {summary['schema_stability']:.2%}  "
         f"({summary['runs_on_modal_contract']}/{summary['runs']} runs)"
     )
-    print(f"Field-level agreement: {summary['field_level_agreement']:.2%}")
+
+    # Block 3 — which fields the extractor populated vs abstained on (modal value).
+    print("\nExtracted vs unextracted fields (modal value over agreeing runs):")
+    _print_two_columns(summary["extracted_fields"], summary["unextracted_fields"])
+
+    print(f"\nField-level agreement: {summary['field_level_agreement']:.2%}")
     print(f"Mean hallucination rate: {summary['mean_hallucination_rate']:.2%}\n")
-    print(f"{'field':45s} {'agree':>7s} {'abstain':>8s} {'halluc':>7s} {'review':>7s}")
-    for key, m in summary["fields"].items():
+    fields: dict[str, dict[str, Any]] = summary["fields"]
+    print(f"{'field':38s} {'agree':>6s} {'abstn':>6s} {'halluc':>6s} {'review':>6s}  modal value")
+    for key, m in fields.items():
         print(
-            f"{key[:45]:45s} {m['agreement']:>7.2f} {m['abstention']:>8.2f} "
-            f"{m['hallucination']:>7.2f} {m['review_rate']:>7.2f}"
+            f"{key[:38]:38s} {m['agreement']:>6.2f} {m['abstention']:>6.2f} "
+            f"{m['hallucination']:>6.2f} {m['review_rate']:>6.2f}  {_fmt_value(m['modal_value'])}"
         )
+
+    # Flag breakdown — per-flag-type counts across the agreeing runs.
+    flagged = {k: m["flags"] for k, m in fields.items() if m["flags"]}
+    if flagged:
+        print("\nFlag breakdown (per-flag-type counts across agreeing runs):")
+        for key, counts in flagged.items():
+            parts = ", ".join(f"{ftype}={c}" for ftype, c in sorted(counts.items()))
+            print(f"  {key:38s} {parts}")
+    print("\n(evidence quotes per field available in --json output.)")
 
 
 def main() -> None:

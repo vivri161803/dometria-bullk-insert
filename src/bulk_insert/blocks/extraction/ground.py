@@ -2,12 +2,12 @@
 
 Final pass over the merged record:
 
-* **Grounding gate** — a single LLM-as-judge call scores the entailment of each
-  populated, evidence-bearing field's value by its verbatim quote.  Fields below
-  ``JUDGE_THRESHOLD`` are nulled and flagged ``ungrounded`` (drop/flag).
+* **Grounding gate** — a single LLM-as-judge call returns a **pass/fail** verdict
+  on the entailment of each populated, evidence-bearing field's value by its
+  verbatim quote.  Fields that fail are nulled and flagged ``ungrounded``.
 * **Completeness** — any null **mandatory** field is routed to ``review_queue``.
 * **Assemble** — produce ``{record, evidence, flags, review_queue}`` plus a
-  scalar ``confidence`` (grounding × mandatory-completeness) for the ``Asset``.
+  scalar ``confidence`` (pass-rate × mandatory-completeness) for the ``Asset``.
 
 The judge is skipped when there is nothing evidence-bearing to score, keeping the
 core path cheap; low confidence never raises (fail-safe).
@@ -20,7 +20,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import instructor
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from bulk_insert.blocks.extraction.client import build_instructor_client, document_text
 from bulk_insert.blocks.extraction.extract import ExtractionOutput
@@ -36,10 +36,10 @@ __all__: list[str] = ["GroundResult", "FieldAssessment", "GroundingReport", "gro
 
 
 class FieldAssessment(BaseModel):
-    """One field's entailment judgement."""
+    """One field's pass/fail entailment judgement."""
 
     field: str
-    score: float = Field(ge=0.0, le=1.0)
+    passed: bool
 
 
 class GroundingReport(BaseModel):
@@ -61,10 +61,10 @@ class GroundResult:
 
 _JUDGE_SYSTEM_PROMPT = (
     "You are a strict grounding judge. For each field below you are given the "
-    "extracted value and the verbatim quote it was taken from. Score, in [0,1], "
-    "how well the quote (in the context of the document) ENTAILS the value: 1.0 = "
-    "fully entailed, 0.0 = unsupported/contradicted. Return one assessment per "
-    "field, using the exact field names."
+    "extracted value and the verbatim quote it was taken from. Decide whether the "
+    "quote (in the context of the document) ENTAILS the value: passed=true if the "
+    "value is fully supported by the quote, passed=false if it is unsupported or "
+    "contradicted. Return one assessment per field, using the exact field names."
 )
 
 
@@ -96,8 +96,8 @@ def _run_grounding_gate(
     text: str,
     cfg: Settings,
     client: instructor.Instructor | None,
-) -> dict[str, float]:
-    """Return per-field entailment scores; empty when nothing to judge."""
+) -> dict[str, bool]:
+    """Return per-field pass/fail entailment verdicts; empty when nothing to judge."""
     candidates = _grounding_candidates(result, nodes)
     if not candidates:
         return {}
@@ -112,7 +112,7 @@ def _run_grounding_gate(
         ],
         **sampling_params(cfg),
     )
-    return {a.field: float(a.score) for a in report.assessments}
+    return {a.field: a.passed for a in report.assessments}
 
 
 def ground_and_assemble(
@@ -135,31 +135,25 @@ def ground_and_assemble(
     effective_cfg = cfg or _default_settings
     text = document_text(chunks)
 
-    scores: dict[str, float] = {}
+    verdicts: dict[str, bool] = {}
     if run_judge:
-        scores = _run_grounding_gate(result, nodes, text, effective_cfg, client)
+        verdicts = _run_grounding_gate(result, nodes, text, effective_cfg, client)
 
     out = GroundResult()
-    threshold = effective_cfg.JUDGE_THRESHOLD
 
-    # Copy flags forward (voting/derivation), then apply the grounding gate.
+    # Copy flags forward (voting/derivation), then apply the boolean grounding gate.
     out.flags = dict(result.flags)
     for name, value in result.values.items():
         grounded_value = value
-        if name in scores and scores[name] < threshold:
+        if name in verdicts and not verdicts[name]:
             grounded_value = None
             flag = dict(out.flags.get(name, {}))
-            flag["ungrounded"] = {"score": scores[name], "threshold": threshold}
+            flag["ungrounded"] = True
             out.flags[name] = flag
-            logger.warning(
-                "Field '%s' failed grounding gate (score=%.2f < %.2f); nulled.",
-                name,
-                scores[name],
-                threshold,
-            )
-        elif name in scores:
+            logger.warning("Field '%s' failed grounding gate (not entailed); nulled.", name)
+        elif name in verdicts:
             flag = dict(out.flags.get(name, {}))
-            flag["grounding"] = scores[name]
+            flag["grounding"] = True
             out.flags[name] = flag
         out.record[name] = grounded_value
         if grounded_value is not None and name in result.quotes:
@@ -177,8 +171,9 @@ def ground_and_assemble(
         else:
             out.review_queue.append(node.name)
 
-    # Confidence — grounding × mandatory-completeness.
-    grounding = sum(scores.values()) / len(scores) if scores else 1.0
+    # Confidence — grounding pass-rate × mandatory-completeness.
+    passed_count = sum(1 for passed in verdicts.values() if passed)
+    grounding = passed_count / len(verdicts) if verdicts else 1.0
     completeness = mandatory_filled / mandatory_total if mandatory_total else 1.0
     out.confidence = max(0.0, min(1.0, grounding * completeness))
 

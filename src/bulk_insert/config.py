@@ -81,8 +81,6 @@ class Settings(BaseSettings):
     HIGH_PRIORITY: int = 4
     # Number of votes cast per high-value group in the self-consistency tier (3–5).
     SELF_CONSISTENCY_N: int = 3
-    # LLM-as-judge entailment gate cutoff; fields scoring below are flagged/dropped.
-    JUDGE_THRESHOLD: float = 0.7
 
     # Phase 6.8 — Offline enum/description compile (metadata sidecar).
     # Model slug for the offline compile step; empty falls back to MODEL_HEAVY.

@@ -18,6 +18,7 @@ at most that many compiled models.
 from __future__ import annotations
 
 import logging
+import re
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field, create_model, model_validator
@@ -34,6 +35,7 @@ __all__: list[str] = [
     "build_extraction_model",
     "is_extractable",
     "quote_field_name",
+    "sanitize_model_name",
 ]
 
 # Abstention sentinel injected into every compiled enum and accepted by every
@@ -142,6 +144,17 @@ def _signature(nodes: list[FieldNode]) -> tuple[Any, ...]:
 # the model is the cost we memoise; keyed by the signature tuple).
 _MODEL_CACHE: dict[tuple[Any, ...], type[BaseModel]] = {}
 
+# The model's ``__name__`` becomes the Instructor tool/function name, which some
+# OpenRouter upstreams (e.g. Azure) constrain to ``^[a-zA-Z0-9_.-]+$``. Topic-derived
+# names carry spaces and accented Italian characters, so sanitise before create_model.
+_INVALID_MODEL_NAME_CHARS = re.compile(r"[^a-zA-Z0-9_.-]+")
+
+
+def sanitize_model_name(name: str) -> str:
+    """Coerce *name* into a valid LLM tool name (``^[a-zA-Z0-9_.-]+$``)."""
+    cleaned = _INVALID_MODEL_NAME_CHARS.sub("_", name).strip("_")
+    return cleaned or "ExtractedAsset"
+
 
 def build_extraction_model(
     nodes: list[FieldNode],
@@ -158,6 +171,7 @@ def build_extraction_model(
         ``needs_evidence`` field.
     """
     effective_cfg = cfg or _default_settings
+    model_name = sanitize_model_name(model_name)
     extractable = _extractable_nodes(nodes, effective_cfg.EXTRACTION_EXCLUDED_TYPES)
 
     signature = _signature(extractable)

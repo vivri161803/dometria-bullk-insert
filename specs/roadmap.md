@@ -285,6 +285,126 @@ changes; the runtime consumes the result with no modification.
 
 ---
 
+## ⬜ Phase 6.10 — Normalization + Grounded Resolution Escape Hatches
+
+**Goal:** Three companion features that finish the post-extraction record before assembly,
+all surfaced by an `eval_extraction.py` run on `test.txt`. **Part A** — a deterministic,
+runtime normalization pass. **Part B** — two opt-in, evidence-bounded resolvers for cases
+the closed-vocab extractor structurally cannot express (a broken heating enum nulled every
+run; a mandatory bedroom count with no single verbatim span).
+
+- **Part A — Normalization (deterministic, no LLM):** canonicalize raw LLM-extracted values
+  — Italian numbers/currency → numerics, ambiguous area units → canonical unit, dates/years
+  → canonical form, free-text whitespace tidied. Unlike cross-field derivation (this catalog
+  has ~zero valid candidates), single-field normalization **cleans** the extracted value
+  rather than replacing it, so it cannot overwrite a correctly-transcribed number with a
+  wrong guess. Runs **per request**; pure Python.
+- **Part B — Grounded resolution escape hatches (opt-in, LLM-in-the-loop, quote-bounded):**
+  an `OUT_OF_VOCAB` enum sentinel + scoped judge for *present-but-unlisted* values, and a
+  transcribe-list + `count` path for *enumerated-not-totaled* fields. Both are bounded by
+  verbatim evidence (never the raw document) and gated behind their own flags.
+
+> Full spec: `specs/2026-07-07-normalization.md` (Part A §1–8, Part B §9–10). Sits **after**
+> the compile phases: it consumes the same `FieldNode`/`ExtractionOutput` structures and
+> needs no re-compile of the sidecar.
+
+### Part A — Normalization (deterministic value canonicalization)
+
+- [ ] `blocks/extraction/normalize.py` — `normalize_fields(result, nodes, cfg) -> None`,
+      in-place over `ExtractionOutput` (mirrors `derive.derive_computed`'s shape). A
+      **normalizer registry** keyed by `field_type` → pure `(raw, node) -> (value, ok)`
+      functions. No LLM, no I/O, no clock — deterministic and reproducible.
+- [ ] **Numeric & currency** — parse Italian-formatted numbers (`"1.200,50 €"` → `1200.5`):
+      strip thousands separators, Italian decimal comma, currency symbols/units, `%`.
+      Applies to `currency` (92), `decimal` (224), `integer` (192), `percentage` (40).
+- [ ] **Unit normalization (mq/ha)** — for the 3 `*_mq_o_ha` fields: read the unit token
+      from the field's **evidence quote** (`ettari`/`ha`/`mq`) and convert to a canonical
+      unit (`DEFAULT_AREA_UNIT`, default `mq`) via the existing `ha_to_mq`/`mq_to_ha`
+      registry. Selected by a per-field sidecar override (below), not by type.
+- [ ] **Date & year** — `year` (7) → 4-digit `int`; `date` (3) → ISO `YYYY-MM-DD`, parsing
+      common Italian forms (`"2019"`, `"gennaio 2020"`, `"01/2020"`).
+- [ ] **Text / whitespace** — `text` fields: trim + collapse internal whitespace only
+      (no case changes), to avoid altering LLM-extracted phrasing.
+- [ ] **Enum/select/boolean skipped** — closed-vocab fields are already canonical
+      (compiled enums); the normalizer leaves them untouched.
+- [ ] **Placement — between Extract and Derive.** The orchestrator calls
+      `normalize_fields` after `extract_fields`, **before** `derive_computed`/reconcile, so
+      computed rules and stated-vs-derived reconciliation operate on canonical numbers.
+- [ ] **Rule selection — type-driven + optional sidecar override.** Default normalizer by
+      `field_type`; an optional per-field `normalization:` key in `field_metadata.yaml`
+      (e.g. `{normalizer: area_unit, canonical: mq}`) overrides for special cases. Parsed in
+      `metadata.py` onto an optional `FieldNode.normalization`; `null`/absent ⇒ type
+      default. Ingest seeds the key as `null` (only the `*_mq_o_ha` fields get a stub).
+- [ ] **Fail-safe on unparseable — keep raw + flag.** If a value can't be parsed, leave the
+      original extracted value in place and record `result.flags[name] = {"normalization":
+      "unparsed", ...}`. Never nulls, never raises. Raw evidence stays in the paired
+      `_quote`; when a value *is* rewritten, the original is noted in the flag for
+      provenance.
+- [ ] **Config knobs** — `NORMALIZE_ENABLED` (default `True`; a global off-switch),
+      `DEFAULT_AREA_UNIT` (default `mq`), and any decimal-locale knob, added to `Settings`
+      and read per-call.
+- [ ] **Unit tests** — Italian number/currency parsing (thousands sep, decimal comma,
+      symbol, `%`); mq/ha resolved from the quote; year/date canonicalization; whitespace
+      collapse; enum/boolean untouched; unparseable → raw kept + flagged; `NORMALIZE_ENABLED
+      = False` short-circuits; sidecar override parsed; **placement** test that a `computed`
+      field sees the normalized number. Existing derive/extract/ground tests stay green.
+- [ ] **CLAUDE.md** — document the new stage (Extract → **Normalize** → Derive) and
+      `normalize.py` in the Block 3 architecture section.
+
+### Part B.1 — `OUT_OF_VOCAB` enum resolution (spec §9)
+
+- [ ] **Third enum sentinel** — add a reserved `OUT_OF_VOCAB` (parallel to `NOT_PRESENT`) to
+      every compiled `select`/`boolean` `Literal` at schema-build time. **No quote-validator
+      change** — only `None`/`NOT_PRESENT` are exempt, so `OUT_OF_VOCAB` already *requires* a
+      verbatim quote. Prompt rule: use it only when present, unlisted, and quotable.
+- [ ] **Scoped resolver (new Stage 4c)** — for each field extracted as `OUT_OF_VOCAB`, run a
+      judge reusing `derive_judged`'s isolated machinery over **the field description + its
+      own quote only, never the raw document**; emit a free-text value (optionally re-mapped
+      to the closest enum first); vote when mandatory/high-priority. Resolved value passes the
+      Stage-8 gate by construction (inferred from its quote).
+- [ ] **Telemetry** — flag `{"resolution": "out_of_vocab", "inferred": …}`; add per-field
+      **OOV rate** to `scripts/eval_extraction.py`. High OOV rate = a wrong compiled enum
+      axis → feeds the Phase 6.8 review (silent grounding nulls become a loud signal).
+- [ ] **Config** — `OOV_ENABLED` (default `True`), `OOV_TOKEN` (`"OUT_OF_VOCAB"`); judge
+      reuses `MODEL_HEAVY`/`SELF_CONSISTENCY_N`. `OOV_ENABLED=False` → sentinel normalises to
+      `None` (today's behaviour). Caveat: a `select` field may now return non-enum free-text.
+- [ ] **Tests** — sentinel in every enum; `OUT_OF_VOCAB` without a quote fails validation;
+      resolver prompt excludes the raw document; resolved value survives grounding; OOV rate
+      reported.
+
+### Part B.2 — count/aggregate fields (spec §10)
+
+- [ ] **`count` rule** — add to `derive.COMPUTED_RULES`: `count(list) → len(list)` (empty →
+      `0`; absent companion → `None`).
+- [ ] **Transcribe-then-count** — a per-field `aggregate: {rule: count, item_hint}` marker in
+      `field_metadata.yaml` makes `schema.build_extraction_model` synthesize a grounded
+      companion `{field}__items: list[{value, quote}]` (extracted) and declare the scalar
+      `numero_X` as **derived** (`kind: computed, rule: count, source_fields:
+      ["{field}__items"]`) — so it drops out of extraction and is counted in code.
+      Deterministic, grounded (per-item quotes), mandatory-satisfiable.
+- [ ] **Wiring** — `metadata.py` parses `aggregate` onto `FieldNode`; the `__items` companion
+      is internal (collapses to the count in `Asset.data`; item quotes may surface under
+      `Asset.evidence`). **Opt-in only** — stated `numero_X` fields stay plain extraction.
+- [ ] **Tests** — `count` rule (len/empty/None); `aggregate` node synthesizes `__items` and
+      excludes the scalar from extraction; end-to-end enumerated-3 → count `3`, non-null, not
+      in `review_queue`; a stated `numero_X` is unchanged.
+
+**Delivery order:** Part A (lowest risk, no LLM) → B.1 (highest diagnostic value) → B.2
+(most schema surgery). Each is independently testable behind its own `*_ENABLED` flag and
+evaluated via `scripts/eval_extraction.py`.
+
+**Exit criteria:** **Part A** — Block 3 emits an `Asset` whose numeric/date fields are
+canonical primitives and whose ambiguous area units are converted to the canonical unit;
+unparseable values are preserved and flagged (never lost); the pass is pure/deterministic
+and adds no LLM cost, and downstream computed derivation/reconcile operate on the normalized
+values. **Part B** — a present-but-unlisted enum value (e.g. heating "Autonomo a gas")
+resolves to a grounded free-text value instead of nulling, with its OOV rate visible in the
+eval harness; an enumerated-not-totaled mandatory count (e.g. bedrooms) is filled
+deterministically from a transcribed item list and no longer routes to `review_queue`. Both
+Part B features are opt-in, evidence-bounded, and independently toggleable.
+
+---
+
 ## ⬜ Phase 7 — FastAPI Synchronous Service
 
 **Goal:** Expose the single HTTP endpoint Dometria Connect calls, plus health probes.

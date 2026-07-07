@@ -27,6 +27,7 @@ from pydantic import BaseModel, Field, create_model
 
 from bulk_insert.blocks.extraction.client import build_instructor_client
 from bulk_insert.blocks.extraction.extract import ExtractionOutput
+from bulk_insert.blocks.extraction.schema import sanitize_model_name
 from bulk_insert.blocks.extraction.tree import DerivationKind, FieldNode
 from bulk_insert.config import Settings
 from bulk_insert.config import settings as _default_settings
@@ -98,7 +99,46 @@ def _rule_max(values: list[Any]) -> Any:
     return None if nums is None or not nums else max(nums)
 
 
+def _rule_mean(values: list[Any]) -> Any:
+    """Arithmetic mean of the sources (e.g. average rating/stars)."""
+    nums = _nums(values)
+    return None if nums is None or not nums else sum(nums) / len(nums)
+
+
+def _rule_percent(values: list[Any]) -> Any:
+    """``part / whole * 100`` (2 sources) — a percentage, not a bare ratio."""
+    nums = _nums(values)
+    if nums is None or len(nums) != 2 or nums[1] == 0:
+        return None
+    return nums[0] / nums[1] * 100.0
+
+
+# Hectares ↔ square metres: 1 ha = 10_000 m². Single-source unit conversions.
+_HA_IN_MQ = 10_000.0
+
+
+def _rule_ha_to_mq(values: list[Any]) -> Any:
+    nums = _nums(values)
+    if nums is None or len(nums) != 1:
+        return None
+    return nums[0] * _HA_IN_MQ
+
+
+def _rule_mq_to_ha(values: list[Any]) -> Any:
+    nums = _nums(values)
+    if nums is None or len(nums) != 1:
+        return None
+    return nums[0] / _HA_IN_MQ
+
+
 # Deterministic computed-rule registry (``rule`` string → function).
+#
+# Every rule is a **pure** function of its ``source_fields`` values — no clock,
+# no config, no I/O — so the same primitives always derive the same value (the
+# pipeline's reproducibility guarantee). Temporal "age from *now*" is
+# deliberately absent: it would depend on ``datetime.now()`` and drift day to
+# day. Compute an age as ``difference(reference_year, year_built)`` with the
+# reference year itself an extracted primitive instead.
 COMPUTED_RULES: dict[str, Callable[[list[Any]], Any]] = {
     "sum": _rule_sum,
     "difference": _rule_difference,
@@ -106,6 +146,10 @@ COMPUTED_RULES: dict[str, Callable[[list[Any]], Any]] = {
     "ratio": _rule_ratio,
     "min": _rule_min,
     "max": _rule_max,
+    "mean": _rule_mean,
+    "percent": _rule_percent,
+    "ha_to_mq": _rule_ha_to_mq,
+    "mq_to_ha": _rule_mq_to_ha,
 }
 
 
@@ -173,7 +217,7 @@ def _judge_response_model(node: FieldNode) -> type[BaseModel]:
     if node.field_type in ("integer", "year"):
         annotation = int
     model: type[BaseModel] = create_model(
-        f"Judged_{node.name}",
+        sanitize_model_name(f"Judged_{node.name}"),
         value=(annotation | None, Field(default=None)),
         justification=(str, Field(...)),
     )
