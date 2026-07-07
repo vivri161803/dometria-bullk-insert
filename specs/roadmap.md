@@ -482,18 +482,41 @@ are loaded and valid.
 
 ---
 
-## ⬜ Phase 8 — Containerization
+## ✅ Phase 8 — Containerization
 
 **Goal:** Ship the service as one self-contained, stateless image.
 
-- [ ] `Dockerfile` — multi-stage (`uv` deps → app); single image, single process (uvicorn). No separate API/worker targets.
-- [ ] Bake models + artifacts — download the sentence-transformers embedding model at build time (`HF_HOME`) so cold-start has no network dependency; bundle `contracts/` and the offline-built `artifacts/` (field tree, manifests, `field_metadata.yaml`).
-- [ ] Runtime config — `OPENROUTER_API_KEY` and model/URL overrides injected via env/secrets, never baked into the image.
-- [ ] Trim `pyproject.toml` — remove `celery`, `redis`, `sqlalchemy`, `asyncpg`, `alembic`; refresh `uv.lock`.
-- [ ] `README.md` — build/run instructions, the API contract, and the deployment handoff notes (stateless, scale by replicas, long-request timeouts).
-- [ ] Smoke test — `docker run` the image and hit `POST /process` with a sample document.
+> Spec: `specs/2026-07-07-containerization.md`.
 
-**Exit criteria:** `docker run` starts the service; a real document submitted via `curl` returns a valid compiled asset.
+- [x] `Dockerfile` — multi-stage (`uv` deps → app); single image, single process (uvicorn). No separate API/worker targets.
+- [x] Bake models + artifacts — download the sentence-transformers embedding model at build time (`HF_HOME`) so cold-start has no network dependency; bundle `contracts/` and the offline-built `artifacts/` (field tree, manifests, `field_metadata.yaml`).
+- [x] Runtime config — `OPENROUTER_API_KEY` and model/URL overrides injected via env/secrets, never baked into the image.
+- [x] Trim `pyproject.toml` — `celery`/`redis`/`sqlalchemy`/`asyncpg`/`alembic` were already absent (dropped earlier with the `REDIS_URL`/`DATABASE_URL` config fields); `uv.lock` re-verified in sync.
+- [x] `README.md` — build/run instructions, the API contract, and the deployment handoff notes (stateless, scale by replicas, long-request timeouts).
+- [x] Smoke test — `docker run` the image and hit `POST /process` with a sample document.
+
+**Exit criteria:** `docker run` starts the service; a real document submitted via `curl` returns a valid compiled asset. ✅
+
+---
+
+## ✅ Phase 8.1 — Runtime Model Override (API config endpoints)
+
+**Goal:** Let an operator swap the heavy/lightweight LLM slugs on a **running** container
+without a redeploy. Spec: `specs/2026-07-07-runtime-model-override.md`.
+
+- [x] `GET /config/models` — report the LLM/embedding slugs currently in effect.
+- [x] `POST /config/model` — swap one role per request (`{role, model}`) by atomically
+      replacing `app.state.settings` with `cfg.model_copy(update=…)`; takes effect on
+      subsequent `/process` calls. **Per-replica and ephemeral** (not shared across replicas,
+      resets on restart); embedding model excluded (baked offline).
+- [x] `Settings.RUNTIME_MODEL_OVERRIDE_ENABLED` (default `True`; `False` → `POST` `403`);
+      surfaced as a `Dockerfile` env default.
+- [x] Validation — `role` `Literal`, `model` stripped + `min_length=1` (both → `422`).
+- [x] Unit tests — get/set heavy+lightweight, override reflected in `/process` `_models`,
+      invalid role/blank model `422`, disabled flag `403`.
+
+**Exit criteria:** `POST /config/model` changes the model used by subsequent `/process`
+calls (verified via `GET /config/models` and `_models`); flag-gated; gates stay green. ✅
 
 ---
 

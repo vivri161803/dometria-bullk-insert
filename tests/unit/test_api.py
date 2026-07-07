@@ -191,3 +191,87 @@ def test_request_validation_missing_id(client: TestClient) -> None:
     """T14 — missing id -> 422."""
     response = client.post("/process", json={"text": "hello"})
     assert response.status_code == 422
+
+
+# ── Runtime model override (POST /config/model, GET /config/models) ─────────────
+
+
+def test_get_models(client: TestClient) -> None:
+    """C1 — GET /config/models reports the current three slugs."""
+    response = client.get("/config/models")
+    assert response.status_code == 200
+    assert response.json() == {
+        "lightweight": "test/lightweight",
+        "heavy": "test/heavy",
+        "embedding": "test/embedding",
+    }
+
+
+def test_set_heavy_model(client: TestClient) -> None:
+    """C2 — swap the heavy slug; lightweight/embedding untouched."""
+    response = client.post("/config/model", json={"role": "heavy", "model": "new/heavy"})
+    assert response.status_code == 200
+    assert response.json() == {
+        "lightweight": "test/lightweight",
+        "heavy": "new/heavy",
+        "embedding": "test/embedding",
+    }
+    # Persisted for subsequent reads.
+    assert client.get("/config/models").json()["heavy"] == "new/heavy"
+
+
+def test_set_lightweight_model(client: TestClient) -> None:
+    """C3 — swap the lightweight slug."""
+    response = client.post("/config/model", json={"role": "lightweight", "model": "new/light"})
+    assert response.status_code == 200
+    assert response.json()["lightweight"] == "new/light"
+    assert response.json()["heavy"] == "test/heavy"
+
+
+def test_override_reflected_in_process_models(client: TestClient) -> None:
+    """C4 — after a swap, /process reports the new slug under _models."""
+    client.post("/config/model", json={"role": "heavy", "model": "swapped/heavy"})
+
+    asset = _asset(confidence=0.9, completeness=1.0)
+    with patch("bulk_insert.api.routes.process_document") as mock_process:
+        mock_process.return_value = PipelineResult.success("doc-1", asset)
+        response = client.post("/process", json={"id": "doc-1", "text": "hello"})
+
+    assert response.status_code == 200
+    assert response.json()["_models"]["heavy"] == "swapped/heavy"
+    # process_document was called with the swapped Settings.
+    called_cfg = mock_process.call_args.args[2]
+    assert called_cfg.MODEL_HEAVY == "swapped/heavy"
+
+
+def test_set_model_invalid_role(client: TestClient) -> None:
+    """C5 — an unknown role fails validation (422)."""
+    response = client.post("/config/model", json={"role": "embedding", "model": "x/y"})
+    assert response.status_code == 422
+
+
+def test_set_model_blank_model(client: TestClient) -> None:
+    """C6 — whitespace-only model is stripped to empty -> 422."""
+    response = client.post("/config/model", json={"role": "heavy", "model": "   "})
+    assert response.status_code == 422
+
+
+def test_set_model_disabled_returns_403() -> None:
+    """C7 — with the flag off, POST is 403 but GET still works."""
+    cfg = Settings(
+        OPENROUTER_API_KEY="test",
+        MODEL_LIGHTWEIGHT="test/lightweight",
+        MODEL_HEAVY="test/heavy",
+        EMBEDDING_MODEL="test/embedding",
+        RUNTIME_MODEL_OVERRIDE_ENABLED=False,
+    )
+    app = create_app(cfg)
+    app.state.ready = True
+    disabled_client = TestClient(app)
+
+    post = disabled_client.post("/config/model", json={"role": "heavy", "model": "x/y"})
+    assert post.status_code == 403
+
+    get = disabled_client.get("/config/models")
+    assert get.status_code == 200
+    assert get.json()["heavy"] == "test/heavy"

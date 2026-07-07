@@ -8,8 +8,10 @@ from fastapi.responses import JSONResponse
 from bulk_insert.api.schemas import (
     ErrorResponse,
     HealthResponse,
+    ModelConfigResponse,
     ProcessRequest,
     ProcessResponse,
+    SetModelRequest,
 )
 from bulk_insert.config import Settings
 from bulk_insert.pipeline import process_document
@@ -53,6 +55,46 @@ def process(request_body: ProcessRequest, request: Request) -> ProcessResponse |
     status = _STATUS_MAP.get(result.error.category, 500)
     body = ErrorResponse(id=result.id, error=result.error)
     return JSONResponse(status_code=status, content=body.model_dump())
+
+
+def _model_config(cfg: Settings) -> ModelConfigResponse:
+    """Snapshot the three model slugs currently in effect."""
+    return ModelConfigResponse(
+        lightweight=cfg.MODEL_LIGHTWEIGHT,
+        heavy=cfg.MODEL_HEAVY,
+        embedding=cfg.EMBEDDING_MODEL,
+    )
+
+
+@router.get("/config/models", response_model=ModelConfigResponse)
+def get_models(request: Request) -> ModelConfigResponse:
+    """Report the LLM/embedding models currently in effect on this container."""
+    cfg: Settings = request.app.state.settings
+    return _model_config(cfg)
+
+
+@router.post("/config/model", response_model=ModelConfigResponse)
+def set_model(
+    request_body: SetModelRequest, request: Request
+) -> ModelConfigResponse | JSONResponse:
+    """Swap one LLM slug on the running container (per-replica, ephemeral).
+
+    Sends one role per request. The change applies to subsequent /process calls
+    on this process only — it is not shared across replicas and resets on restart.
+    """
+    cfg: Settings = request.app.state.settings
+
+    if not cfg.RUNTIME_MODEL_OVERRIDE_ENABLED:
+        return JSONResponse(
+            status_code=403,
+            content={"detail": "runtime model override is disabled"},
+        )
+
+    field = "MODEL_LIGHTWEIGHT" if request_body.role == "lightweight" else "MODEL_HEAVY"
+    new_cfg = cfg.model_copy(update={field: request_body.model})
+    # Atomic pointer swap — in-flight requests keep their captured cfg.
+    request.app.state.settings = new_cfg
+    return _model_config(new_cfg)
 
 
 @router.get("/health", response_model=HealthResponse)

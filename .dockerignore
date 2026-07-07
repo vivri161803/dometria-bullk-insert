@@ -1,0 +1,38 @@
+# Keep the build context lean. The Dockerfile only COPYs specific paths
+# (pyproject.toml, uv.lock, src, artifacts, contracts); this is a safety net.
+
+# Virtualenv / build outputs
+.venv/
+build/
+dist/
+*.egg-info/
+
+# VCS
+.git/
+.gitignore
+
+# Caches
+__pycache__/
+*.py[cod]
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.hypothesis/
+
+# Tests, specs, scripts, dev harness (not needed at runtime)
+tests/
+specs/
+scripts/
+sample.txt
+architecture.md
+
+# Secrets & local run artifacts
+.env
+*.log
+*.progress.log
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.claude/
+.python-version

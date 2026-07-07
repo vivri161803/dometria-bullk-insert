@@ -32,11 +32,176 @@ A single synchronous HTTP endpoint plus health probes (see `tech-stack.md` for s
 
 | Method & Path | Purpose | Request | Response |
 |---|---|---|---|
-| `POST /process` | Run the full pipeline on one document. | `{ "id": "<doc-id>", "text": "<raw text>" }` | `200` → `{ "id", "asset": {...}, "confidence": <0–1> }` |
+| `POST /process` | Run the full pipeline on one document. | `{ "id": "<doc-id>", "text": "<raw text>" }` | `200` → `{ "id", "asset": {...}, "confidence": <0–1>, "completeness": <0–1>, "_models": {...} }` |
 | `GET /health` | Liveness — process is up. | — | `200` |
 | `GET /ready` | Readiness — spaCy + embedding model are warmed and the container can serve. | — | `200` once warm |
+| `GET /config/models` | Report the LLM/embedding slugs in effect on this container. | — | `200` → `{ "lightweight", "heavy", "embedding" }` |
+| `POST /config/model` | Swap one LLM slug on the running container (one role per request). | `{ "role": "heavy"\|"lightweight", "model": "<slug>" }` | `200` → `{ "lightweight", "heavy", "embedding" }` |
+
+> **Runtime model override.** `POST /config/model` lets an operator change `MODEL_HEAVY` /
+> `MODEL_LIGHTWEIGHT` on a running container without a redeploy (send one request per model
+> with the bare OpenRouter slug). The override is **per-replica and ephemeral** — it affects
+> only the container that received it and resets on restart; it is not shared across replicas
+> (POST every replica, run a single replica, or set the env var + redeploy for a durable,
+> cluster-wide change). The embedding model is baked into the image and excluded. Gated by
+> `RUNTIME_MODEL_OVERRIDE_ENABLED` (default on); protect with the Phase 9 API-key auth.
 
 The `id` is opaque to the service and is **echoed back on every response**, success or error, so the caller can correlate results without the service holding any state. **The service persists nothing** — storing the compiled JSON is the caller's responsibility.
+
+## API Guide (Phase 7 — testing)
+
+The service is a thin FastAPI adapter (`src/bulk_insert/api/`) over `pipeline.process_document`. It adds **no pipeline logic**: it maps `PipelineResult.error.category` to an HTTP status code and echoes `id`. This section is a hands-on guide for exercising it locally.
+
+### Running the service
+
+`api/app.py` exposes an application **factory** `create_app(cfg)` (no module-level `app`), so launch uvicorn with `--factory`:
+
+```bash
+# 1. Install deps + create the venv (also exposes bulk-insert-cli)
+uv sync
+
+# 2. Provide the OpenRouter key the pipeline needs for live LLM calls
+echo "OPENROUTER_API_KEY=sk-or-..." >> .env    # or export it in the shell
+
+# 3. Serve on :8000 — the factory's lifespan warms spaCy + the embedding
+#    model and loads/validates the offline artifacts before serving.
+uv run uvicorn "bulk_insert.api.app:create_app" --factory --port 8000
+
+# interactive OpenAPI docs, once up:  http://localhost:8000/docs
+```
+
+Warm-up runs **once at startup**: a missing/invalid artifact (uncompiled sidecar, absent field tree) makes startup fail and `/ready` never turns green — it does **not** fail the first `/process` request. Because the pipeline calls OpenRouter, a real `POST /process` needs a valid `OPENROUTER_API_KEY`; the health/readiness probes do not.
+
+### Endpoints
+
+| Method & Path | Purpose | Auth | Body |
+|---|---|---|---|
+| `POST /process` | Run the full pipeline on one document (synchronous, seconds→minutes). | none (Phase 9) | `ProcessRequest` |
+| `GET /health` | Liveness — the process is up. Always `200`. | none | — |
+| `GET /ready` | Readiness — `200` once models **and** offline artifacts are warmed/valid, else `503`. | none | — |
+| `GET /config/models` | The LLM/embedding slugs currently in effect on this container. | none (Phase 9) | — |
+| `POST /config/model` | Swap one LLM slug at runtime (per-replica, ephemeral; one role per request). | none (Phase 9) | `SetModelRequest` |
+
+`POST /process` runs as a synchronous `def` handler, so FastAPI executes it in the threadpool; per-container in-flight concurrency is capped so one replica doesn't run many heavy extractions at once.
+
+### Request schema — `ProcessRequest`
+
+```jsonc
+{
+  "id": "doc-123",     // opaque correlation handle, echoed back verbatim
+  "text": "..."        // raw document text; must be non-empty (min_length=1)
+}
+```
+
+A missing/blank `text` is rejected: an **empty string** fails Pydantic validation at the FastAPI boundary (`422` with FastAPI's validation envelope), while **whitespace-only** text passes validation but the pipeline short-circuits to a `bad_input` error → **`400`** (see the error table below).
+
+### Success response — `ProcessResponse` (`200`)
+
+The body carries the **full Block 3 v2 `Asset`** under `asset`, with `confidence` and `completeness` also **lifted to the top level** and a `_models` observability block:
+
+```jsonc
+{
+  "id": "doc-123",
+  "confidence": 0.82,          // lifted: grounding pass-rate × completeness
+  "completeness": 0.75,        // lifted: share of mandatory fields filled (null if product has none)
+  "asset": {
+    "contract_id": "162_restaurant",
+    "data": {                  // the schema-compliant record (field key → value)
+      "nome_attivita": "Trattoria da Mario",
+      "posti_a_sedere": 48,
+      "anno_apertura": 2019
+    },
+    "confidence": 0.82,        // same value, nested
+    "completeness": 0.75,      // same value, nested
+    "evidence": {              // per-field verbatim source quote (may be null)
+      "posti_a_sedere": "sala interna con 48 coperti"
+    },
+    "flags": {                 // per-field agreement/grounding/normalization notes (may be null)
+      "anno_apertura": { "normalization": { "status": "ok" } }
+    },
+    "review_queue": [          // mandatory field keys left unfilled (may be null / empty)
+      "codice_fiscale"
+    ]
+  },
+  "_models": {
+    "lightweight": "openai/gpt-4o-mini",
+    "heavy": "openai/gpt-4o",
+    "embedding": "paraphrase-multilingual-MiniLM-L12-v2"
+  }
+}
+```
+
+> **A `200` can still need review.** Low `confidence` **and** a non-empty `review_queue` are *successful* extractions — they surface in the body, never as a non-2xx. The API adds no top-level review envelope; callers read `asset.review_queue`. Field values are the extracted record, not guarantees — `evidence`/`flags`/`review_queue` are the audit trail. `data` keys and mandatory set vary per resolved contract (`contract_id`); the values above are illustrative.
+
+### Error response — `ErrorResponse`
+
+Every non-2xx (except FastAPI's own request-validation `422`) echoes `id` and a structured `PipelineError`:
+
+```jsonc
+{
+  "id": "doc-123",
+  "error": {
+    "stage": "contract",        // input | preprocess | contract | extract
+    "category": "unprocessable",// bad_input | unprocessable | retryable | server
+    "message": "no qualifying chunk: document cannot be categorized"
+  }
+}
+```
+
+Status mapping (`routes._STATUS_MAP`, keyed on `error.category`):
+
+| Category | Status | When |
+|---|---|---|
+| `bad_input` | `400` | Whitespace-only `text` — the pipeline short-circuits before any block. |
+| `unprocessable` | `422` | `ContractDeterminationError` — no chunk clears `CONTRACT_MIN_SCORE`; document can't be categorized. |
+| `retryable` | `502` | Transient upstream OpenAI/`httpx` failure — safe to resubmit the same `id`. |
+| `server` | `500` | `ContractNotFoundError` / `AssetExtractionError` (missing/malformed schema) or any uncaught error. |
+
+(FastAPI request-validation failures — e.g. empty `text`, missing `id`, malformed JSON — return `422` with FastAPI's default `{"detail": [...]}` envelope, produced *before* the handler runs, so they do **not** carry the `PipelineError` shape.)
+
+### `curl` recipes
+
+```bash
+# Liveness — up immediately, even mid warm-up.
+curl -s http://localhost:8000/health
+# {"status":"ok"}
+
+# Readiness — 503 until warm, then 200. Gate traffic on this.
+curl -s -o /dev/null -w '%{http_code}\n' http://localhost:8000/ready
+
+# Happy path from a file (jq pretty-prints; -w shows the status code).
+curl -s -w '\nHTTP %{http_code}\n' -X POST http://localhost:8000/process \
+  -H 'Content-Type: application/json' \
+  --data "$(jq -Rs '{id:"doc-123", text:.}' < sample.txt)"
+
+# Inline text.
+curl -s -X POST http://localhost:8000/process \
+  -H 'Content-Type: application/json' \
+  -d '{"id":"doc-1","text":"Trattoria da Mario, 48 coperti, aperta nel 2019."}'
+
+# bad_input → 400 (whitespace-only text passes Pydantic, pipeline rejects it).
+curl -s -w '\nHTTP %{http_code}\n' -X POST http://localhost:8000/process \
+  -H 'Content-Type: application/json' -d '{"id":"blank","text":"   "}'
+
+# Request-validation 422 (empty text fails min_length=1 at the boundary).
+curl -s -w '\nHTTP %{http_code}\n' -X POST http://localhost:8000/process \
+  -H 'Content-Type: application/json' -d '{"id":"empty","text":""}'
+```
+
+### Testing without live LLM calls
+
+For deterministic tests, drive the app with the FastAPI `TestClient` and mock `process_document` — no network, no key needed (mirrors the Phase 7 route tests):
+
+```python
+from fastapi.testclient import TestClient
+from bulk_insert.api.app import create_app
+
+client = TestClient(create_app())          # lifespan warm-up runs on enter
+resp = client.post("/process", json={"id": "t1", "text": "hello world"})
+assert resp.json()["id"] == "t1"
+```
+
+Patch `bulk_insert.api.routes.process_document` to return a crafted `PipelineResult` to assert the `category → status` mapping and the `id` echo without hitting the pipeline. For a live end-to-end check, the `bulk-insert-cli` harness (`uv run bulk-insert-cli --file sample.txt --json`) runs the same orchestrator the endpoint wraps.
 
 ## Core Capabilities
 

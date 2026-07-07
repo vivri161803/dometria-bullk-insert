@@ -66,3 +66,15 @@ Thumbs.db
 # Local run artifacts (eval/variance harness progress logs)
 eval_progress.log
 *.progress.log
+
+# Docker — the container IMAGE is a build output, published to GHCR, never
+# committed. The repo tracks only the build INPUTS: Dockerfile, .dockerignore,
+# src/, artifacts/, contracts/, pyproject.toml, uv.lock. Ignore any local image
+# exports / build cruft so a `docker save` tarball can't slip into a commit.
+*.tar
+*.tar.gz
+*.tar.zst
+*.tar.xz
+*.oci
+docker-build.log
+rebuild.log

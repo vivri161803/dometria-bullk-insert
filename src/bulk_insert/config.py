@@ -113,5 +113,13 @@ class Settings(BaseSettings):
     TOPIC_CLUSTER_THRESHOLD: float = 0.6
     TOPIC_CLUSTER_LINKAGE: str = "average"
 
+    # API — runtime model override endpoint (POST /config/model).
+    # When True, an operator can swap MODEL_LIGHTWEIGHT / MODEL_HEAVY on a running
+    # container without a redeploy. The override is **per-replica and ephemeral**
+    # (it affects only the container that received the request and resets on
+    # restart — it is not shared across replicas). When False, POST /config/model
+    # returns 403 and the models stay pinned to the baked/env values.
+    RUNTIME_MODEL_OVERRIDE_ENABLED: bool = True
+
 
 settings = Settings()
