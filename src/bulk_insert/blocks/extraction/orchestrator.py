@@ -8,6 +8,7 @@ Composes the tree-driven stages into the stable public contract::
         → extract_fields          (Stages 3-4: partition by topic, sequential,
                                    strategy-routed, evidence-grounded)
         → normalize_fields        (Stage 4b: deterministic value canonicalization)
+        → resolve_out_of_vocab    (Stage 4c: scoped judge for OUT_OF_VOCAB enums)
         → derive_computed         (Stage 5+7: Python derivations + reconcile)
         → derive_judged           (Stage 6: isolated primitives-only LLM run)
         → ground_and_assemble     (Stage 8: entailment gate + completeness)
@@ -31,6 +32,7 @@ from bulk_insert.blocks.extraction.extract import extract_fields
 from bulk_insert.blocks.extraction.ground import ground_and_assemble
 from bulk_insert.blocks.extraction.metadata import enrich
 from bulk_insert.blocks.extraction.normalize import normalize_fields
+from bulk_insert.blocks.extraction.resolve import resolve_out_of_vocab
 from bulk_insert.blocks.extraction.tree import select_tree_fields
 from bulk_insert.config import Settings
 from bulk_insert.config import settings as _default_settings
@@ -101,6 +103,9 @@ def extract_asset(
     # Stage 4b — deterministic value normalization (before derivation, so any
     # computed rule / reconcile operates on canonical numbers).
     normalize_fields(result, nodes, effective_cfg)
+
+    # Stage 4c — resolve OUT_OF_VOCAB enum fields from their own quote (§9).
+    resolve_out_of_vocab(result, nodes, effective_cfg, client=llm)
 
     # Stage 5+7 — computed derivations + reconcile (deterministic).
     derive_computed(result, nodes, effective_cfg)

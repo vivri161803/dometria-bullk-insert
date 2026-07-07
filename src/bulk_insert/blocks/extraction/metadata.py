@@ -30,10 +30,12 @@ from typing import Any
 import yaml
 
 from bulk_insert.blocks.extraction.tree import (
+    Aggregate,
     Derivation,
     DerivationKind,
     FieldNode,
     TreeField,
+    items_field_name,
 )
 from bulk_insert.config import Settings
 from bulk_insert.config import settings as _default_settings
@@ -64,6 +66,16 @@ def _parse_derivation(raw: Any) -> Derivation | None:
         return None
     source_fields = tuple(str(s) for s in raw.get("source_fields", []))
     return Derivation(source_fields=source_fields, rule=str(raw.get("rule", "")), kind=kind)
+
+
+def _parse_aggregate(raw: Any) -> Aggregate | None:
+    """Build an :class:`Aggregate` from a sidecar mapping, or ``None`` (§10)."""
+    if not isinstance(raw, dict):
+        return None
+    rule = str(raw.get("rule", "")).strip()
+    if not rule:
+        return None
+    return Aggregate(rule=rule, item_hint=str(raw.get("item_hint", "")))
 
 
 class FieldMetadata:
@@ -141,6 +153,17 @@ class FieldMetadata:
                 enum_values = [str(v) for v in values]
 
         derivation = _parse_derivation(meta.get("derivation"))
+        aggregate = _parse_aggregate(meta.get("aggregate"))
+        # A count-aggregate marker (§10) makes the scalar a `computed` count over
+        # its synthesized `{name}__items` companion. Synthesize that derivation
+        # here when the sidecar didn't spell it out, so a single `aggregate:` key
+        # is enough to opt in (the scalar then drops out of extraction).
+        if aggregate is not None and derivation is None:
+            derivation = Derivation(
+                source_fields=(items_field_name(field.name),),
+                rule=aggregate.rule,
+                kind=DerivationKind.COMPUTED,
+            )
 
         return FieldNode(
             name=field.name,
@@ -156,6 +179,7 @@ class FieldMetadata:
             enum=enum_values,
             needs_evidence=needs_evidence,
             derivation=derivation,
+            aggregate=aggregate,
         )
 
 

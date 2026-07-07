@@ -285,7 +285,7 @@ changes; the runtime consumes the result with no modification.
 
 ---
 
-## ⬜ Phase 6.10 — Normalization + Grounded Resolution Escape Hatches
+## ✅ Phase 6.10 — Normalization + Grounded Resolution Escape Hatches
 
 **Goal:** Three companion features that finish the post-extraction record before assembly,
 all surfaced by an `eval_extraction.py` run on `test.txt`. **Part A** — a deterministic,
@@ -358,39 +358,39 @@ run; a mandatory bedroom count with no single verbatim span).
 
 ### Part B.1 — `OUT_OF_VOCAB` enum resolution (spec §9)
 
-- [ ] **Third enum sentinel** — add a reserved `OUT_OF_VOCAB` (parallel to `NOT_PRESENT`) to
+- [x] **Third enum sentinel** — add a reserved `OUT_OF_VOCAB` (parallel to `NOT_PRESENT`) to
       every compiled `select`/`boolean` `Literal` at schema-build time. **No quote-validator
       change** — only `None`/`NOT_PRESENT` are exempt, so `OUT_OF_VOCAB` already *requires* a
       verbatim quote. Prompt rule: use it only when present, unlisted, and quotable.
-- [ ] **Scoped resolver (new Stage 4c)** — for each field extracted as `OUT_OF_VOCAB`, run a
+- [x] **Scoped resolver (new Stage 4c)** — for each field extracted as `OUT_OF_VOCAB`, run a
       judge reusing `derive_judged`'s isolated machinery over **the field description + its
       own quote only, never the raw document**; emit a free-text value (optionally re-mapped
       to the closest enum first); vote when mandatory/high-priority. Resolved value passes the
       Stage-8 gate by construction (inferred from its quote).
-- [ ] **Telemetry** — flag `{"resolution": "out_of_vocab", "inferred": …}`; add per-field
+- [x] **Telemetry** — flag `{"resolution": "out_of_vocab", "inferred": …}`; add per-field
       **OOV rate** to `scripts/eval_extraction.py`. High OOV rate = a wrong compiled enum
       axis → feeds the Phase 6.8 review (silent grounding nulls become a loud signal).
-- [ ] **Config** — `OOV_ENABLED` (default `True`), `OOV_TOKEN` (`"OUT_OF_VOCAB"`); judge
+- [x] **Config** — `OOV_ENABLED` (default `True`), `OOV_TOKEN` (`"OUT_OF_VOCAB"`); judge
       reuses `MODEL_HEAVY`/`SELF_CONSISTENCY_N`. `OOV_ENABLED=False` → sentinel normalises to
       `None` (today's behaviour). Caveat: a `select` field may now return non-enum free-text.
-- [ ] **Tests** — sentinel in every enum; `OUT_OF_VOCAB` without a quote fails validation;
+- [x] **Tests** — sentinel in every enum; `OUT_OF_VOCAB` without a quote fails validation;
       resolver prompt excludes the raw document; resolved value survives grounding; OOV rate
       reported.
 
 ### Part B.2 — count/aggregate fields (spec §10)
 
-- [ ] **`count` rule** — add to `derive.COMPUTED_RULES`: `count(list) → len(list)` (empty →
+- [x] **`count` rule** — add to `derive.COMPUTED_RULES`: `count(list) → len(list)` (empty →
       `0`; absent companion → `None`).
-- [ ] **Transcribe-then-count** — a per-field `aggregate: {rule: count, item_hint}` marker in
+- [x] **Transcribe-then-count** — a per-field `aggregate: {rule: count, item_hint}` marker in
       `field_metadata.yaml` makes `schema.build_extraction_model` synthesize a grounded
       companion `{field}__items: list[{value, quote}]` (extracted) and declare the scalar
       `numero_X` as **derived** (`kind: computed, rule: count, source_fields:
       ["{field}__items"]`) — so it drops out of extraction and is counted in code.
       Deterministic, grounded (per-item quotes), mandatory-satisfiable.
-- [ ] **Wiring** — `metadata.py` parses `aggregate` onto `FieldNode`; the `__items` companion
+- [x] **Wiring** — `metadata.py` parses `aggregate` onto `FieldNode`; the `__items` companion
       is internal (collapses to the count in `Asset.data`; item quotes may surface under
       `Asset.evidence`). **Opt-in only** — stated `numero_X` fields stay plain extraction.
-- [ ] **Tests** — `count` rule (len/empty/None); `aggregate` node synthesizes `__items` and
+- [x] **Tests** — `count` rule (len/empty/None); `aggregate` node synthesizes `__items` and
       excludes the scalar from extraction; end-to-end enumerated-3 → count `3`, non-null, not
       in `review_queue`; a stated `numero_X` is unchanged.
 

@@ -33,7 +33,7 @@ from bulk_insert.blocks.extraction.schema import (
     is_extractable,
     quote_field_name,
 )
-from bulk_insert.blocks.extraction.tree import FieldNode
+from bulk_insert.blocks.extraction.tree import FieldNode, items_field_name
 from bulk_insert.config import Settings
 from bulk_insert.config import settings as _default_settings
 from bulk_insert.llm import sampling_params
@@ -65,6 +65,24 @@ _EXTRACTION_SYSTEM_PROMPT = (
     "values.\n"
     "- Never invent identifiers, coordinates, or figures that are not present."
 )
+
+# Appended only when OOV resolution is enabled (§9.2): the escape hatch for a
+# present-but-unlisted enum value. Reserved for the tail, always with a quote.
+_OOV_PROMPT_RULE = (
+    "\n- For a fixed-value field that is clearly present but where NONE of the "
+    "allowed values fit, return '{token}' and still copy the exact supporting "
+    "text into its '<field>_quote'. Use '{token}' only when present, unlisted, "
+    "and quotable — otherwise prefer a listed value or '{absent}'."
+)
+
+
+def _system_prompt(cfg: Settings) -> str:
+    """Extraction system prompt, with the OOV escape-hatch rule when enabled."""
+    if cfg.OOV_ENABLED:
+        return _EXTRACTION_SYSTEM_PROMPT + _OOV_PROMPT_RULE.format(
+            token=cfg.OOV_TOKEN, absent=NOT_PRESENT
+        )
+    return _EXTRACTION_SYSTEM_PROMPT
 
 
 @dataclass
@@ -100,13 +118,24 @@ def group_strategy(group: list[FieldNode], cfg: Settings) -> str:
 def _unpack(instance: BaseModel, group: list[FieldNode]) -> tuple[dict[str, Any], dict[str, str]]:
     """Extract {name: value} and {name: quote} from a populated group model.
 
-    ``NOT_PRESENT`` is normalised to ``None``; quotes are only kept for populated
-    values.
+    ``NOT_PRESENT`` is normalised to ``None`` (``OUT_OF_VOCAB`` is kept for the
+    Stage-4c resolver); quotes are only kept for populated values. A count-
+    aggregate node contributes its ``{name}__items`` companion list instead of a
+    scalar.
     """
     values: dict[str, Any] = {}
     quotes: dict[str, str] = {}
     fields = type(instance).model_fields
     for node in group:
+        if node.aggregate is not None:
+            items_name = items_field_name(node.name)
+            raw_items = getattr(instance, items_name, None)
+            values[items_name] = (
+                [{"value": it.value, "quote": it.quote} for it in raw_items]
+                if raw_items is not None
+                else None
+            )
+            continue
         if node.name not in fields:
             continue  # excluded from the extraction schema
         raw = getattr(instance, node.name)
@@ -131,7 +160,7 @@ def _call(
         response_model=response_model,
         max_retries=3,
         messages=[
-            {"role": "system", "content": _EXTRACTION_SYSTEM_PROMPT},
+            {"role": "system", "content": _system_prompt(cfg)},
             {"role": "user", "content": text},
         ],
         **sampling_params(cfg),
@@ -169,6 +198,14 @@ def _extract_self_consistency(
 
     out = ExtractionOutput()
     for node in group:
+        if node.aggregate is not None:
+            # Companion item lists aren't voted (the count is deterministic given
+            # the items); take the first populated transcription.
+            items_name = items_field_name(node.name)
+            out.values[items_name] = next(
+                (v[items_name] for v, _ in samples if v.get(items_name) is not None), None
+            )
+            continue
         if node.name not in model.model_fields:
             continue
         votes = [values.get(node.name) for values, _ in samples]
@@ -232,8 +269,14 @@ def extract_fields(
     text = document_text(chunks)
     llm = client or build_instructor_client(effective_cfg)
 
-    # Only extractable (non-derived, non-excluded) fields reach the LLM.
-    extractable = [n for n in nodes if is_extractable(n, effective_cfg.EXTRACTION_EXCLUDED_TYPES)]
+    # Only extractable (non-derived, non-excluded) fields reach the LLM; a
+    # count-aggregate node is included for its synthesized `__items` companion
+    # even though its scalar is derived.
+    extractable = [
+        n
+        for n in nodes
+        if is_extractable(n, effective_cfg.EXTRACTION_EXCLUDED_TYPES) or n.aggregate is not None
+    ]
     groups = partition_by_topic(extractable)
 
     result = ExtractionOutput()

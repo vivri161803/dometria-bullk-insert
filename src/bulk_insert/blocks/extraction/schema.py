@@ -23,7 +23,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field, create_model, model_validator
 
-from bulk_insert.blocks.extraction.tree import FieldNode
+from bulk_insert.blocks.extraction.tree import FieldNode, items_field_name
 from bulk_insert.config import Settings
 from bulk_insert.config import settings as _default_settings
 
@@ -31,6 +31,8 @@ logger = logging.getLogger(__name__)
 
 __all__: list[str] = [
     "NOT_PRESENT",
+    "OUT_OF_VOCAB",
+    "AggregateItem",
     "NativeQuoteModel",
     "build_extraction_model",
     "is_extractable",
@@ -41,6 +43,19 @@ __all__: list[str] = [
 # Abstention sentinel injected into every compiled enum and accepted by every
 # field: the model returns it (instead of guessing) when a value is absent.
 NOT_PRESENT = "NOT_PRESENT"
+
+# Long-tail escape hatch (§9): the model emits this on a compiled enum when the
+# field is clearly present but no listed value fits. Unlike NOT_PRESENT it is NOT
+# validator-exempt, so it *requires* a verbatim quote; a scoped judge (Stage 4c)
+# then resolves it to a real value. Kept in sync with ``cfg.OOV_TOKEN``.
+OUT_OF_VOCAB = "OUT_OF_VOCAB"
+
+
+class AggregateItem(BaseModel):
+    """One transcribed item in a count-aggregate companion list (§10)."""
+
+    value: str = Field(description="The item as stated in the document.")
+    quote: str = Field(description="Verbatim source text for this item.")
 
 
 def quote_field_name(name: str) -> str:
@@ -113,28 +128,41 @@ def is_extractable(node: FieldNode, excluded_types: tuple[str, ...]) -> bool:
     return True
 
 
-def _annotation_for(node: FieldNode) -> Any:
+def _annotation_for(node: FieldNode, oov_enabled: bool) -> Any:
     """Map a field node to its (non-optional) extraction annotation."""
     if node.enum:
-        # Compiled closed vocabulary → Literal incl. the abstention sentinel.
-        values = tuple(dict.fromkeys([*node.enum, NOT_PRESENT]))
+        # Compiled closed vocabulary → Literal incl. the abstention sentinel and
+        # (when enabled) the OUT_OF_VOCAB long-tail escape hatch.
+        sentinels = [NOT_PRESENT, OUT_OF_VOCAB] if oov_enabled else [NOT_PRESENT]
+        values = tuple(dict.fromkeys([*node.enum, *sentinels]))
         return Literal[values]
     return _SCALAR_ANNOTATION.get(node.field_type, str)
 
 
-def _extractable_nodes(nodes: list[FieldNode], excluded_types: tuple[str, ...]) -> list[FieldNode]:
-    return [n for n in nodes if is_extractable(n, excluded_types)]
+def _has_companion(node: FieldNode) -> bool:
+    """Whether *node* contributes a synthesized ``__items`` companion (§10)."""
+    return node.aggregate is not None
 
 
-def _signature(nodes: list[FieldNode]) -> tuple[Any, ...]:
+def _included_nodes(nodes: list[FieldNode], excluded_types: tuple[str, ...]) -> list[FieldNode]:
+    """Nodes contributing a field to the extraction model.
+
+    An ordinary extractable field contributes its scalar; a count-aggregate node
+    (derived, so not itself extractable) contributes only its ``__items`` companion.
+    """
+    return [n for n in nodes if is_extractable(n, excluded_types) or _has_companion(n)]
+
+
+def _signature(nodes: list[FieldNode], oov_enabled: bool) -> tuple[Any, ...]:
     """Stable cache key capturing everything that shapes the generated model."""
-    return tuple(
+    return (oov_enabled,) + tuple(
         (
             n.name,
             n.field_type,
             tuple(n.enum) if n.enum else None,
             n.needs_evidence,
             n.prompt_context,
+            n.aggregate.item_hint if n.aggregate else None,
         )
         for n in nodes
     )
@@ -171,17 +199,28 @@ def build_extraction_model(
         ``needs_evidence`` field.
     """
     effective_cfg = cfg or _default_settings
+    oov_enabled = effective_cfg.OOV_ENABLED
     model_name = sanitize_model_name(model_name)
-    extractable = _extractable_nodes(nodes, effective_cfg.EXTRACTION_EXCLUDED_TYPES)
+    included = _included_nodes(nodes, effective_cfg.EXTRACTION_EXCLUDED_TYPES)
 
-    signature = _signature(extractable)
+    signature = _signature(included, oov_enabled)
     cached = _MODEL_CACHE.get(signature)
     if cached is not None:
         return cached
 
     definitions: dict[str, Any] = {}
-    for node in extractable:
-        annotation = _annotation_for(node)
+    for node in included:
+        if _has_companion(node):
+            # Count-aggregate (§10): synthesize a grounded item list instead of
+            # the scalar (which is derived and filled by the `count` rule in code).
+            hint = node.aggregate.item_hint if node.aggregate else ""
+            desc = f"Transcribe each {hint or 'item'} as a value + verbatim quote (else null)."
+            definitions[items_field_name(node.name)] = (
+                list[AggregateItem] | None,
+                Field(default=None, description=desc),
+            )
+            continue
+        annotation = _annotation_for(node, oov_enabled)
         definitions[node.name] = (
             annotation | None,
             Field(default=None, description=node.prompt_context),
@@ -203,8 +242,8 @@ def build_extraction_model(
     logger.info(
         "Block 3 v2 — extraction model '%s': %d field(s), %d with evidence quotes.",
         model_name,
-        len(extractable),
-        sum(1 for n in extractable if n.needs_evidence),
+        len(included),
+        sum(1 for n in included if n.needs_evidence and not _has_companion(n)),
     )
     _MODEL_CACHE[signature] = model
     return model

@@ -24,7 +24,7 @@ from pydantic import BaseModel
 
 from bulk_insert.blocks.extraction.client import build_instructor_client, document_text
 from bulk_insert.blocks.extraction.extract import ExtractionOutput
-from bulk_insert.blocks.extraction.tree import FieldNode
+from bulk_insert.blocks.extraction.tree import FieldNode, items_field_name
 from bulk_insert.config import Settings
 from bulk_insert.config import settings as _default_settings
 from bulk_insert.llm import sampling_params
@@ -141,9 +141,20 @@ def ground_and_assemble(
 
     out = GroundResult()
 
+    # Count-aggregate companions (§10) are internal: they collapse to the derived
+    # count in `data`, and their per-item quotes surface as the scalar's evidence.
+    companion_of = {items_field_name(n.name): n for n in nodes if n.aggregate is not None}
+
     # Copy flags forward (voting/derivation), then apply the boolean grounding gate.
     out.flags = dict(result.flags)
     for name, value in result.values.items():
+        if name in companion_of:
+            scalar = companion_of[name].name
+            if isinstance(value, list) and value:
+                out.evidence[scalar] = " | ".join(
+                    str(it.get("quote", "")) for it in value if isinstance(it, dict)
+                )
+            continue
         grounded_value = value
         if name in verdicts and not verdicts[name]:
             grounded_value = None

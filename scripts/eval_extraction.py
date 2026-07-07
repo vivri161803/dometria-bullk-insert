@@ -123,18 +123,24 @@ def _per_field_metrics(assets: list[Asset]) -> dict[str, dict[str, Any]]:
 
         # Per-flag-type tally across runs (ungrounded / voting / reconcile / ...).
         flag_counter: Counter[str] = Counter()
+        oov_hits = 0
         for a in assets:
             field_flags = (a.flags or {}).get(key) or {}
             for ftype in field_flags:
                 if ftype in _POSITIVE_FLAGS:
                     continue
                 flag_counter[ftype] += 1
+            # OUT_OF_VOCAB rate (§9.4): a high rate flags a wrong compiled enum axis.
+            resolution = field_flags.get("resolution")
+            if isinstance(resolution, dict) and resolution.get("out_of_vocab"):
+                oov_hits += 1
 
         metrics[key] = {
             "agreement": top / n,
             "abstention": nulls / n,
             "hallucination": populated_without_quote / n,
             "review_rate": reviewed / n,
+            "oov_rate": oov_hits / n,
             "modal_value": modal_value,
             "modal_quote": modal_quote,
             "flags": dict(flag_counter),
@@ -214,11 +220,15 @@ def _print_human(summary: dict[str, Any]) -> None:
     print(f"\nField-level agreement: {summary['field_level_agreement']:.2%}")
     print(f"Mean hallucination rate: {summary['mean_hallucination_rate']:.2%}\n")
     fields: dict[str, dict[str, Any]] = summary["fields"]
-    print(f"{'field':38s} {'agree':>6s} {'abstn':>6s} {'halluc':>6s} {'review':>6s}  modal value")
+    print(
+        f"{'field':38s} {'agree':>6s} {'abstn':>6s} {'halluc':>6s} {'review':>6s} "
+        f"{'oov':>6s}  modal value"
+    )
     for key, m in fields.items():
         print(
             f"{key[:38]:38s} {m['agreement']:>6.2f} {m['abstention']:>6.2f} "
-            f"{m['hallucination']:>6.2f} {m['review_rate']:>6.2f}  {_fmt_value(m['modal_value'])}"
+            f"{m['hallucination']:>6.2f} {m['review_rate']:>6.2f} {m['oov_rate']:>6.2f}  "
+            f"{_fmt_value(m['modal_value'])}"
         )
 
     # Flag breakdown — per-flag-type counts across the agreeing runs.

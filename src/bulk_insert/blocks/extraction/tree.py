@@ -35,12 +35,19 @@ from bulk_insert.models.contract import Contract
 __all__: list[str] = [
     "DerivationKind",
     "Derivation",
+    "Aggregate",
     "TreeField",
     "FieldNode",
     "load_field_tree",
     "select_tree_fields",
     "signature_for",
+    "items_field_name",
 ]
+
+
+def items_field_name(name: str) -> str:
+    """Conventional companion field holding a count-aggregate's transcribed items."""
+    return f"{name}__items"
 
 
 class DerivationKind(StrEnum):
@@ -58,6 +65,20 @@ class Derivation:
     source_fields: tuple[str, ...]  # field keys this value derives from
     rule: str  # code ref (computed) or instruction (judged)
     kind: DerivationKind
+
+
+@dataclass(frozen=True)
+class Aggregate:
+    """A count/aggregate marker (§10): transcribe items to a list, count in code.
+
+    Opt-in per field via ``field_metadata.yaml``. Drives synthesis of a grounded
+    companion ``{name}__items`` extraction field and declares the scalar as a
+    ``computed`` ``count`` over it. ``rule`` is a :data:`COMPUTED_RULES` key
+    (``count`` for v1); ``item_hint`` is prompt context for the item list.
+    """
+
+    rule: str
+    item_hint: str = ""
 
 
 @dataclass(frozen=True)
@@ -116,6 +137,7 @@ class FieldNode:
     enum: list[str] | None = None  # closed vocab; NOT_PRESENT auto-added downstream
     needs_evidence: bool = True
     derivation: Derivation | None = None
+    aggregate: Aggregate | None = None  # §10 count/aggregate marker (opt-in)
 
     @property
     def is_derived(self) -> bool:

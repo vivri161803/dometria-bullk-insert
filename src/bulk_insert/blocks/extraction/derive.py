@@ -131,6 +131,21 @@ def _rule_mq_to_ha(values: list[Any]) -> Any:
     return nums[0] / _HA_IN_MQ
 
 
+def _rule_count(values: list[Any]) -> Any:
+    """``len`` of a single transcribed companion list (§10).
+
+    ``[items]`` → ``len(items)`` (empty list → ``0``); a missing/``None``
+    companion → ``None`` (unknown, not zero). Not numeric like the other rules —
+    it counts grounded items rather than summing sibling scalars.
+    """
+    if len(values) != 1:
+        return None
+    items = values[0]
+    if items is None:
+        return None
+    return len(items) if isinstance(items, list) else None
+
+
 # Deterministic computed-rule registry (``rule`` string → function).
 #
 # Every rule is a **pure** function of its ``source_fields`` values — no clock,
@@ -150,6 +165,7 @@ COMPUTED_RULES: dict[str, Callable[[list[Any]], Any]] = {
     "percent": _rule_percent,
     "ha_to_mq": _rule_ha_to_mq,
     "mq_to_ha": _rule_mq_to_ha,
+    "count": _rule_count,
 }
 
 

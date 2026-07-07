@@ -91,6 +91,16 @@ class Settings(BaseSettings):
     NORMALIZE_ENABLED: bool = True
     NORMALIZE_DECIMAL_LOCALE: str = "it"
 
+    # Phase 6.10 Part B.1 — OUT_OF_VOCAB enum long-tail resolution (Stage 4c).
+    # A third reserved enum sentinel (parallel to NOT_PRESENT) the extractor emits
+    # when a select/boolean field is clearly present but no listed value fits. A
+    # scoped judge then infers the value from the field's own quote + description
+    # (never the raw document), re-mapping to the closest enum value when one fits
+    # and otherwise emitting free-text. Disabled → the sentinel is not offered and
+    # falls back to today's behaviour (absent listed value → null at grounding).
+    OOV_ENABLED: bool = True
+    OOV_TOKEN: str = "OUT_OF_VOCAB"
+
     # Phase 6.8 — Offline enum/description compile (metadata sidecar).
     # Model slug for the offline compile step; empty falls back to MODEL_HEAVY.
     MODEL_COMPILE: str = "anthropic/claude-haiku-4.5"
