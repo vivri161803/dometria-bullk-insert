@@ -82,6 +82,15 @@ class Settings(BaseSettings):
     # Number of votes cast per high-value group in the self-consistency tier (3–5).
     SELF_CONSISTENCY_N: int = 3
 
+    # Phase 6.10 Part A — deterministic value normalization (Stage 4b).
+    # Pure-Python, type-driven canonicalization run between extraction and
+    # derivation (Italian numbers/percent, year/date → ISO, whitespace tidy).
+    # NORMALIZE_ENABLED is a global off-switch. NORMALIZE_DECIMAL_LOCALE selects
+    # the number grammar (`it` = '.' thousands / ',' decimal); reserved for
+    # future locales — the current parser is Italian-only.
+    NORMALIZE_ENABLED: bool = True
+    NORMALIZE_DECIMAL_LOCALE: str = "it"
+
     # Phase 6.8 — Offline enum/description compile (metadata sidecar).
     # Model slug for the offline compile step; empty falls back to MODEL_HEAVY.
     MODEL_COMPILE: str = "anthropic/claude-haiku-4.5"

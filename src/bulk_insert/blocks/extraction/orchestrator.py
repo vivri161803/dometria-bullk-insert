@@ -7,6 +7,7 @@ Composes the tree-driven stages into the stable public contract::
         → enrich                  (overlay the metadata sidecar → FieldNodes)
         → extract_fields          (Stages 3-4: partition by topic, sequential,
                                    strategy-routed, evidence-grounded)
+        → normalize_fields        (Stage 4b: deterministic value canonicalization)
         → derive_computed         (Stage 5+7: Python derivations + reconcile)
         → derive_judged           (Stage 6: isolated primitives-only LLM run)
         → ground_and_assemble     (Stage 8: entailment gate + completeness)
@@ -29,6 +30,7 @@ from bulk_insert.blocks.extraction.exceptions import AssetExtractionError
 from bulk_insert.blocks.extraction.extract import extract_fields
 from bulk_insert.blocks.extraction.ground import ground_and_assemble
 from bulk_insert.blocks.extraction.metadata import enrich
+from bulk_insert.blocks.extraction.normalize import normalize_fields
 from bulk_insert.blocks.extraction.tree import select_tree_fields
 from bulk_insert.config import Settings
 from bulk_insert.config import settings as _default_settings
@@ -95,6 +97,10 @@ def extract_asset(
     # Stages 3–4 — partition by topic + sequential, strategy-routed extraction.
     logger.info("Block 3 v2 — Stages 3-4: extraction (%d fields).", len(nodes))
     result = extract_fields(chunks, nodes, effective_cfg, client=llm)
+
+    # Stage 4b — deterministic value normalization (before derivation, so any
+    # computed rule / reconcile operates on canonical numbers).
+    normalize_fields(result, nodes, effective_cfg)
 
     # Stage 5+7 — computed derivations + reconcile (deterministic).
     derive_computed(result, nodes, effective_cfg)

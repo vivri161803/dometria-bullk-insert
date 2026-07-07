@@ -308,47 +308,52 @@ run; a mandatory bedroom count with no single verbatim span).
 > the compile phases: it consumes the same `FieldNode`/`ExtractionOutput` structures and
 > needs no re-compile of the sidecar.
 
-### Part A — Normalization (deterministic value canonicalization)
+### Part A — Normalization (deterministic value canonicalization) ✅
 
-- [ ] `blocks/extraction/normalize.py` — `normalize_fields(result, nodes, cfg) -> None`,
+> **Implemented as a pure type-driven lookup table** (no LLM, no sidecar override,
+> no mq/ha unit resolution). Rationale: the extraction schema already types
+> numerics (`int`/`float`) and enums (`Literal`), so raw Italian number *strings*
+> rarely reach normalization — the numeric normalizers are a defensive safety net
+> and the real work is `date` (→ ISO) and `text` (whitespace). The `area_unit`
+> override + `FieldNode.normalization` + ingest seeding are **deferred** (mq/ha
+> fields pass through untouched for now).
+
+- [x] `blocks/extraction/normalize.py` — `normalize_fields(result, nodes, cfg) -> None`,
       in-place over `ExtractionOutput` (mirrors `derive.derive_computed`'s shape). A
-      **normalizer registry** keyed by `field_type` → pure `(raw, node) -> (value, ok)`
+      **normalizer registry** keyed by `field_type` → pure `(raw) -> (value, ok)`
       functions. No LLM, no I/O, no clock — deterministic and reproducible.
-- [ ] **Numeric & currency** — parse Italian-formatted numbers (`"1.200,50 €"` → `1200.5`):
+- [x] **Numeric & currency** — parse Italian-formatted numbers (`"1.200,50 €"` → `1200.5`):
       strip thousands separators, Italian decimal comma, currency symbols/units, `%`.
-      Applies to `currency` (92), `decimal` (224), `integer` (192), `percentage` (40).
-- [ ] **Unit normalization (mq/ha)** — for the 3 `*_mq_o_ha` fields: read the unit token
-      from the field's **evidence quote** (`ettari`/`ha`/`mq`) and convert to a canonical
-      unit (`DEFAULT_AREA_UNIT`, default `mq`) via the existing `ha_to_mq`/`mq_to_ha`
-      registry. Selected by a per-field sidecar override (below), not by type.
-- [ ] **Date & year** — `year` (7) → 4-digit `int`; `date` (3) → ISO `YYYY-MM-DD`, parsing
-      common Italian forms (`"2019"`, `"gennaio 2020"`, `"01/2020"`).
-- [ ] **Text / whitespace** — `text` fields: trim + collapse internal whitespace only
+      Applies to `currency`, `decimal`, `integer`, `percentage`. Already-typed values
+      (the common case) pass through.
+- [ ] **Unit normalization (mq/ha)** — *deferred.* Would read the unit token from the 3
+      `*_mq_o_ha` fields' evidence quote and convert to a canonical unit; needs the sidecar
+      override below. Not in this cut — those fields pass through untouched.
+- [x] **Date & year** — `year` → 4-digit `int`; `date` → ISO `YYYY-MM-DD`, parsing
+      common Italian forms (`"2019"`, `"gennaio 2020"`, `"01/2020"`, `"12/03/2021"`).
+- [x] **Text / whitespace** — `text` fields: trim + collapse internal whitespace only
       (no case changes), to avoid altering LLM-extracted phrasing.
-- [ ] **Enum/select/boolean skipped** — closed-vocab fields are already canonical
-      (compiled enums); the normalizer leaves them untouched.
-- [ ] **Placement — between Extract and Derive.** The orchestrator calls
+- [x] **Enum/select/boolean skipped** — closed-vocab fields are already canonical
+      (compiled enums); the normalizer leaves them (and `None`) untouched.
+- [x] **Placement — between Extract and Derive.** The orchestrator calls
       `normalize_fields` after `extract_fields`, **before** `derive_computed`/reconcile, so
       computed rules and stated-vs-derived reconciliation operate on canonical numbers.
-- [ ] **Rule selection — type-driven + optional sidecar override.** Default normalizer by
-      `field_type`; an optional per-field `normalization:` key in `field_metadata.yaml`
-      (e.g. `{normalizer: area_unit, canonical: mq}`) overrides for special cases. Parsed in
-      `metadata.py` onto an optional `FieldNode.normalization`; `null`/absent ⇒ type
-      default. Ingest seeds the key as `null` (only the `*_mq_o_ha` fields get a stub).
-- [ ] **Fail-safe on unparseable — keep raw + flag.** If a value can't be parsed, leave the
-      original extracted value in place and record `result.flags[name] = {"normalization":
-      "unparsed", ...}`. Never nulls, never raises. Raw evidence stays in the paired
-      `_quote`; when a value *is* rewritten, the original is noted in the flag for
-      provenance.
-- [ ] **Config knobs** — `NORMALIZE_ENABLED` (default `True`; a global off-switch),
-      `DEFAULT_AREA_UNIT` (default `mq`), and any decimal-locale knob, added to `Settings`
-      and read per-call.
-- [ ] **Unit tests** — Italian number/currency parsing (thousands sep, decimal comma,
-      symbol, `%`); mq/ha resolved from the quote; year/date canonicalization; whitespace
-      collapse; enum/boolean untouched; unparseable → raw kept + flagged; `NORMALIZE_ENABLED
-      = False` short-circuits; sidecar override parsed; **placement** test that a `computed`
+- [x] **Rule selection — type-driven.** Normalizer chosen by `field_type` from the
+      registry; types absent from it (`boolean`/`select`/unknown) are no-ops. *(The optional
+      per-field `normalization:` sidecar override + `FieldNode.normalization` are deferred
+      with the mq/ha work.)*
+- [x] **Fail-safe on unparseable — keep raw + flag.** If a value can't be parsed, leave the
+      original in place and record `flags[name]["normalization"] = {"status": "unparsed",
+      ...}`. Never nulls, never raises. When rewritten, the original is noted for provenance.
+- [x] **Config knobs** — `NORMALIZE_ENABLED` (default `True`; global off-switch) and
+      `NORMALIZE_DECIMAL_LOCALE` (default `"it"`; reserved). Added to `Settings`, read
+      per-call. *(`DEFAULT_AREA_UNIT` deferred with the mq/ha work.)*
+- [x] **Unit tests** — `tests/unit/test_normalize.py`: Italian number/currency parsing;
+      year/date canonicalization; whitespace collapse; enum/boolean/`None` untouched;
+      unparseable → raw kept + flagged; `NORMALIZE_ENABLED = False` short-circuits;
+      provenance flag preserved alongside prior flags; **placement** test that a `computed`
       field sees the normalized number. Existing derive/extract/ground tests stay green.
-- [ ] **CLAUDE.md** — document the new stage (Extract → **Normalize** → Derive) and
+- [x] **CLAUDE.md** — documents the new stage (Extract → **Normalize** → Derive) and
       `normalize.py` in the Block 3 architecture section.
 
 ### Part B.1 — `OUT_OF_VOCAB` enum resolution (spec §9)
