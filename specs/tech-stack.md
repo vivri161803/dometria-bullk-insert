@@ -47,6 +47,23 @@
 
 ---
 
+## Asset Extraction (Block 3) — tree-driven, evidence-grounded
+
+> Full spec: `specs/2026-07-03-tree-driven-extraction.md`. Reworks Block 3 to attack **field-level extraction variance**.
+
+| Component | Choice | Rationale |
+|---|---|---|
+| Field selection | **Static master field tree** (built offline from all contracts) | The 97 contracts are unioned once into a `field_tree.json` + per-product `product_manifests.json`. At runtime, Block 2's `(lv1/lv2/lv3)` path selects the product's fields by traversal — no per-request contract globbing. Cached by field-set signature. |
+| Per-product schema | **`pydantic.create_model` at runtime** | Each extracted field is paired with a `{name}_quote` evidence field; every closed enum gets a `NOT_PRESENT` abstention value; a `@model_validator` rejects non-null fields missing their quote (drives Instructor retry). Derived fields are excluded. |
+| Grouping & execution | **`topic` tag → sequential groups** | Fields partition cleanly by a one-per-field topic tag; groups extract **sequentially** within the request (no `asyncio` fan-out — consistent with the synchronous-container model below). `priority` orders the queue and gates voting; it is not an execution dependency. |
+| Faithfulness | **Evidence quotes + self-consistency voting + LLM-as-judge gate** | Mandatory/high-priority groups vote (`SELF_CONSISTENCY_N`, disagreement → null + flag); a final entailment gate (`JUDGE_THRESHOLD` ~0.7) drops/flags ungrounded values; null mandatory fields route to a `review_queue`. |
+| Derivation | **Code (`computed`) + isolated 2nd LLM run (`judged`)** | Arithmetic/temporal/cross-field values are computed in Python, never asked of the extractor. The rare reasoning fields get a second LLM pass over **primitives + quotes only, never the raw document**. |
+| Field metadata | **`field_metadata.yaml` sidecar (runtime-injected, fully editable)** | Enum vocabularies, descriptions, topics, priorities, and derivations live in YAML keyed by field — not baked into code. **Enum vocabularies and descriptions are compiled offline in a later step via an LLM API call**; until then the runtime treats `pending` enums as free-text and tests inject mocks. The file stays modifiable after compilation. |
+
+> **No DAG.** Field selection replaces conditional node-skipping (irrelevant fields never enter the pipeline); a topic partition replaces ordered execution. There is no topological sort, dependency edge, or workflow engine — deliberately.
+
+---
+
 ## Orchestration & Concurrency
 
 | Component | Choice | Rationale |
@@ -115,16 +132,20 @@ The service ships as **one container image** running the FastAPI app under uvico
 
 ```
 bulk_insert/
-├── contracts/              # 97 JSON contract files ({id}_{lv3_code}.json)
+├── contracts/              # 97 JSON contract files ({id}_{lv3_code}.json) — source for the field tree
+├── artifacts/              # offline build output: field_registry.json, field_tree.json,
+│                           #   product_manifests.json, field_metadata.yaml (baked into image)
 ├── specs/
 │   ├── mission.md
 │   ├── tech-stack.md
-│   └── roadmap.md
+│   ├── roadmap.md
+│   └── 2026-07-03-tree-driven-extraction.md   # Block 3 v2 (variance reduction)
 ├── src/
 │   └── bulk_insert/
 │       ├── __init__.py
 │       ├── api/            # FastAPI app, routes, request/response schemas
-│       ├── blocks/         # Block 1, 2, 3 modules
+│       ├── blocks/         # Block 1, 2, 3 modules (Block 3 = tree-driven extraction:
+│       │                   #   ingest, tree, metadata, schema, extract, derive, ground)
 │       ├── models/         # Pydantic models (contracts, chunks, assets)
 │       ├── pipeline.py     # process_document() — composes Block 1 → 2 → 3
 │       └── config.py       # Settings via pydantic-settings

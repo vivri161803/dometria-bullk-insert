@@ -37,7 +37,6 @@ from __future__ import annotations
 
 import logging
 from functools import lru_cache
-from typing import Any
 
 import instructor
 import spacy
@@ -45,6 +44,7 @@ from spacy.language import Language
 
 from bulk_insert.config import Settings
 from bulk_insert.config import settings as _default_settings
+from bulk_insert.llm import sampling_params
 from bulk_insert.models.chunk import Chunk, ChunkAnalysis
 
 logger = logging.getLogger(__name__)
@@ -197,8 +197,7 @@ def score_and_resolve_chunk(
     chunk: Chunk,
     client: instructor.Instructor,
     *,
-    temperature: float = 0.0,
-    seed: int | None = None,
+    cfg: Settings | None = None,
 ) -> Chunk:
     """Score and coreference-resolve a single *chunk* in one LLM call.
 
@@ -209,10 +208,9 @@ def score_and_resolve_chunk(
         ``is_coref_resolved`` is ``False`` on entry.
     client:
         A configured :class:`instructor.Instructor` instance.
-    temperature:
-        Sampling temperature for the call (default ``0.0`` for determinism).
-    seed:
-        Optional best-effort reproducibility seed.
+    cfg:
+        Optional settings override supplying the sampling + provider-routing
+        parameters.  Defaults to the process-level singleton.
 
     Returns
     -------
@@ -223,9 +221,7 @@ def score_and_resolve_chunk(
         * ``relevance_score`` set to the LLM-assigned score,
         * ``is_coref_resolved`` set to ``True``.
     """
-    sampling: dict[str, Any] = {"temperature": temperature}
-    if seed is not None:
-        sampling["seed"] = seed
+    sampling = sampling_params(cfg or _default_settings)
     analysis: ChunkAnalysis = client.chat.completions.create(
         model=getattr(client, "model", None) or "openai/gpt-4o-mini",
         response_model=ChunkAnalysis,
@@ -297,12 +293,7 @@ def score_and_resolve_chunks(chunks: list[Chunk], cfg: Settings | None = None) -
 
     analysed: list[Chunk] = []
     for chunk in chunks:
-        analysed_chunk = score_and_resolve_chunk(
-            chunk,
-            client,
-            temperature=effective_cfg.LLM_TEMPERATURE,
-            seed=effective_cfg.LLM_SEED,
-        )
+        analysed_chunk = score_and_resolve_chunk(chunk, client, cfg=effective_cfg)
         analysed.append(analysed_chunk)
 
     scores = [c.relevance_score for c in analysed]

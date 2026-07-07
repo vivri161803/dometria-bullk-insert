@@ -1,0 +1,244 @@
+# topics.yaml — grouping-topic dictionary (topic name -> integer id), §6.8.
+#
+# Proposed by the offline compile step and freely user-editable. Each field's
+# `topic` in field_metadata.yaml is stored as one of these ids; the runtime
+# (metadata.py) resolves the id back to the name. Ids are stable across re-runs.
+meta:
+  schema_version: 1
+topics:
+  ubicazione: 1
+  attività agricola: 2
+  superfici aziendali: 3
+  commercializzazione: 4
+  infrastrutture: 5
+  certificazioni: 6
+  coltivazioni: 7
+  caratteristiche terreno: 8
+  risorse idriche: 9
+  superfici: 10
+  servizi agriturismo: 11
+  produzioni: 12
+  dati economici: 13
+  ricettività: 14
+  operatività: 15
+  servizi: 16
+  caratteristiche edificio: 17
+  servizi edificio: 18
+  impianti: 19
+  caratteristiche: 20
+  composizione: 21
+  dotazioni: 22
+  costi: 23
+  attrezzature: 24
+  produzione: 25
+  rete vendita: 26
+  fatturato: 27
+  accessibilità: 28
+  cessione: 29
+  spazi: 30
+  licenze: 31
+  performance: 32
+  servizi bar: 33
+  superfici bar: 34
+  destinazione barracks: 35
+  condizioni barracks: 36
+  superfici barracks: 37
+  strutture: 38
+  concessione: 39
+  economico: 40
+  struttura: 41
+  gestione: 42
+  autorizzazioni: 43
+  ricavi: 44
+  servizi bnb: 45
+  performance bnb: 46
+  capacità bnb: 47
+  reputazione bnb: 48
+  conformità bnb: 49
+  superfici bnb: 50
+  superfici body shop: 51
+  servizi body shop: 52
+  parcheggio: 53
+  prezzo: 54
+  vincoli: 55
+  superfici edificabili: 56
+  vincoli territoriali: 57
+  identità aziendale: 58
+  classificazione attività: 59
+  conformità normativa: 60
+  sostenibilità: 61
+  proprietà intellettuale: 62
+  clientela: 63
+  profilo: 64
+  management: 65
+  strategia: 66
+  finanza: 67
+  patrimonio: 68
+  asset intangibili: 69
+  settore: 70
+  risorse umane: 71
+  mercato: 72
+  business model: 73
+  transazione: 74
+  operazioni: 75
+  commercio: 76
+  valutazione: 77
+  attività: 78
+  operazione: 79
+  caf-patronato: 80
+  cafe: 81
+  capienza: 82
+  classificazione: 83
+  concessioni: 84
+  servizi officina: 85
+  specializzazione: 86
+  accreditamenti: 87
+  risorse: 88
+  capacità: 89
+  caratteristiche architettoniche: 90
+  storia: 91
+  utilizzo: 92
+  spazi interni: 93
+  superfici esterne: 94
+  condizioni: 95
+  vincoli normativi: 96
+  dotazioni commerciali: 97
+  canali di vendita: 98
+  modello commerciale: 99
+  posizionamento commerciale: 100
+  valutazione economica: 101
+  caratteristiche commerciali: 102
+  attività commerciale: 103
+  locazione: 104
+  immobile: 105
+  sviluppo: 106
+  proprietà: 107
+  distribuzione: 108
+  identità: 109
+  produzione agroalimentare: 110
+  servizi professionali: 111
+  costruzioni infrastrutture: 112
+  operazioni costruzioni: 113
+  operazioni energia: 114
+  energia: 115
+  ambiente: 116
+  ambiente circolare: 117
+  sanità autorizzazioni: 118
+  sanità risorse: 119
+  sanità fatturato: 120
+  sanità servizi: 121
+  ospitalità struttura: 122
+  struttura ricettiva: 123
+  prenotazioni: 124
+  conformità: 125
+  tecnologia: 126
+  investimenti: 127
+  profilo aziendale: 128
+  supply chain: 129
+  innovazione: 130
+  logistica: 131
+  vendita: 132
+  distribuzione retail: 133
+  caratteristiche aziendali: 134
+  prodotti: 135
+  canali: 136
+  valore: 137
+  destinazione: 138
+  accessi: 139
+  mandati: 140
+  caratteristiche concessionaria: 141
+  superfici concessionaria: 142
+  inventario concessionaria: 143
+  performance concessionaria: 144
+  dotazioni edificio: 145
+  sostenibilità edificio: 146
+  superfici agricole: 147
+  idoneità: 148
+  superfici edifici: 149
+  dotazioni negozio: 150
+  canali vendita: 151
+  format negozio: 152
+  posizionamento mercato: 153
+  prodotto: 154
+  inventario: 155
+  allestimento: 156
+  sicurezza: 157
+  redditività: 158
+  prezzo garage: 159
+  servizi garage: 160
+  dotazioni gastronomia: 161
+  servizi gastronomia: 162
+  superfici gastronomia: 163
+  licenze gastronomia: 164
+  prezzo gastronomia: 165
+  tariffe: 166
+  reputazione: 167
+  caratteristiche strutturali: 168
+  capacità ricettiva: 169
+  performance operativa: 170
+  servizi e dotazioni: 171
+  vendite: 172
+  dimensioni: 173
+  caratteristiche tecniche: 174
+  caratteristiche costruttive: 175
+  agenzia assicurativa: 176
+  portafoglio: 177
+  gioielleria: 178
+  laboratorio: 179
+  infrastrutture logistiche: 180
+  servizi logistici: 181
+  servizi medici: 182
+  magazzino: 183
+  convenzioni: 184
+  specialità: 185
+  assortimento: 186
+  tipologia: 187
+  finiture: 188
+  layout: 189
+  posizionamento: 190
+  outlet park: 191
+  palace: 192
+  vincoli e tutele: 193
+  offerta commerciale: 194
+  personale e qualifiche: 195
+  inventario e valore: 196
+  arredi e attrezzature: 197
+  servizi e impianti: 198
+  commerciale: 199
+  servizi farmacia: 200
+  titolarità: 201
+  orari: 202
+  servizi phone shop: 203
+  operatori: 204
+  servizi scolastici: 205
+  risorse scolastiche: 206
+  infrastrutture locali: 207
+  servizi locali: 208
+  conduttore: 209
+  contratto: 210
+  agenzia immobiliare: 211
+  efficienza energetica: 212
+  destinazione d'uso: 213
+  occupazione: 214
+  residence: 215
+  ristorazione: 216
+  storico: 217
+  reddito: 218
+  locazioni: 219
+  localizzazione: 220
+  cronologia: 221
+  traffico: 222
+  utenza: 223
+  amministrazione: 224
+  economia: 225
+  impianti sportivi: 226
+  servizi annessi: 227
+  cessione attività: 228
+  affiliazioni: 229
+  locali: 230
+  dotazioni magazzino: 231
+  superfici magazzino: 232
+  superfici wine bar: 233
+  dotazioni wine bar: 234
+  canali vendita wine bar: 235
+  licenze wine bar: 236

@@ -30,13 +30,13 @@ from __future__ import annotations
 import logging
 from collections import defaultdict
 from functools import lru_cache
-from typing import Any
 
 import instructor
 from sentence_transformers import SentenceTransformer
 
 from bulk_insert.config import Settings
 from bulk_insert.config import settings as _default_settings
+from bulk_insert.llm import sampling_params
 from bulk_insert.models.categories import get_candidate_labels
 from bulk_insert.models.chunk import Chunk
 from bulk_insert.models.contract import Contract, Level1Prediction
@@ -155,8 +155,7 @@ def extract_lv1(
     chunks: list[Chunk],
     client: instructor.Instructor,
     *,
-    temperature: float = 0.0,
-    seed: int | None = None,
+    cfg: Settings | None = None,
 ) -> str:
     """Call the LLM to classify chunk texts into a ``Level1Literal`` value.
 
@@ -166,10 +165,9 @@ def extract_lv1(
         The top-k chunks to concatenate and send to the LLM.
     client:
         A configured Instructor client.
-    temperature:
-        Sampling temperature for the call (default ``0.0`` for determinism).
-    seed:
-        Optional best-effort reproducibility seed.
+    cfg:
+        Optional settings override supplying the sampling + provider-routing
+        parameters.  Defaults to the process-level singleton.
 
     Returns
     -------
@@ -178,9 +176,7 @@ def extract_lv1(
     """
     combined_text = "\n---\n".join(c.text for c in chunks)
 
-    sampling: dict[str, Any] = {"temperature": temperature}
-    if seed is not None:
-        sampling["seed"] = seed
+    sampling = sampling_params(cfg or _default_settings)
     prediction: Level1Prediction = client.chat.completions.create(
         model=getattr(client, "model", None) or "openai/gpt-4o-mini",
         response_model=Level1Prediction,
@@ -348,12 +344,7 @@ def determine_contract(
     # Step 2: LLM lv1 extraction
     logger.info("Block 2 — Step 2/3: LLM lv1 extraction.")
     client = _build_instructor_client(effective_cfg)
-    lv1 = extract_lv1(
-        top_chunks,
-        client,
-        temperature=effective_cfg.LLM_TEMPERATURE,
-        seed=effective_cfg.LLM_SEED,
-    )
+    lv1 = extract_lv1(top_chunks, client, cfg=effective_cfg)
 
     # Step 3: Cosine similarity + weighted vote → (lv2, lv3)
     logger.info("Block 2 — Step 3/3: Cosine similarity voting.")
