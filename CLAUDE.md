@@ -99,8 +99,16 @@ CLAUDE.md is the single source of truth for how to work in this repository and s
 
 If CLAUDE.md and `specs/roadmap.md` disagree, **roadmap is temporarily authoritative** (it updates first), but file an issue to sync CLAUDE.md before merging.
 
+## Connect integration & deployment
+
+Production service base URL: `https://bulkinsert.dometria.ai/` (Kubernetes). Connect env vars: `DOMETRIA_BULK_INSERT_SERVICE_URL`, `DOMETRIA_BULK_INSERT_TOKEN`; this service validates inbound calls via `API_KEY` / `API_KEY_HEADER` (`config.py`).
+
+**Cross-repo protocol docs** (M2M contract, dispatch payload, procedure test scripts, gap analysis) live in `../Integrations/mod-02-dometria-bulk-insert/` — especially `doc-side-dometria-connect.md`, `doc-api-v1-procedures-dispatch.md`, `procedure/`, and `analysis/protocol-review-2026-07-13.md`. Canonical Connect-side element spec: `../Documentation/element-users-assets-input-from-source-03-dometria-bulk-insert.md`.
+
+**Known integration gap (2026-07-13):** Connect integration specs target `POST /procedures` (async dispatch + callback); this repo's FastAPI surface exposes `POST /process` (synchronous extraction only). Closing the gap requires a new adapter route or a Connect-side sync call — see protocol review §G2. Runtime extraction behaviour is unchanged.
+
 ## Notes
 
-- `.env` holds secrets (`OPENROUTER_API_KEY`) and any model/URL overrides.
+- `.env` holds secrets (`OPENROUTER_API_KEY`, `API_KEY`) and any model/URL overrides.
 - Tests use mocked Instructor clients for unit tests; `tests/integration/` is gated behind `-m integration` and makes real LLM calls.
 - Italian appears throughout: roadmap/specs prose, category display names (`CATEGORY_NAMES`), contract labels, and default boolean options (`si`/`no`/`non dichiarato`). LLM prompts are in English but target Italian real-estate/business documents.
