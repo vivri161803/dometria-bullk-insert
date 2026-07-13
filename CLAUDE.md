@@ -105,6 +105,8 @@ Production service base URL: `https://bulkinsert.dometria.ai/` (Kubernetes). Con
 
 **Cross-repo protocol docs** (M2M contract, dispatch payload, procedure test scripts, gap analysis) live in `../Integrations/mod-02-dometria-bulk-insert/` — especially `doc-side-dometria-connect.md`, `doc-api-v1-procedures-dispatch.md`, `procedure/`, and `analysis/protocol-review-2026-07-13.md`. Canonical Connect-side element spec: `../Documentation/element-users-assets-input-from-source-03-dometria-bulk-insert.md`.
 
+**Integration test procedures (2026-07-13):** `procedure/run.sh` bootstraps a local `.venv` and runs four Python scripts against Connect/Bulk Insert: `01_post_procedures_dispatch.py` (outbound dispatch), `02_get_assets_categories.py`, `03_get_category_contract.py`, `04_post_candidates_ingest.py` (callback). Minimal JSON fixtures live in `procedure/examples/`; operator guide in `procedure/doc-procedure.md`. The same `run.sh` + `_venv_guard.py` pattern is shared with `api-owner-asset-insert` and `mod-03-dometria-computer-vision` in the Integrations repo.
+
 **Known integration gap (2026-07-13):** Connect integration specs target `POST /procedures` (async dispatch + callback); this repo's FastAPI surface exposes `POST /process` (synchronous extraction only). Closing the gap requires a new adapter route or a Connect-side sync call — see protocol review §G2. Runtime extraction behaviour is unchanged.
 
 ## Notes
