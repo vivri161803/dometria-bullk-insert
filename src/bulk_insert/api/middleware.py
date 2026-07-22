@@ -9,7 +9,8 @@ One middleware handles two edge concerns before/around routing:
   caller's ``X-Request-ID`` header if present, else a generated one), bind it to
   the logging context so downstream lines are tagged, echo it back on the
   response header, and emit one structured access line with method, path,
-  status, and ``duration_ms``.
+  status, and ``duration_ms``. Liveness/readiness probes (``/health``,
+  ``/ready``) are excluded from the access log to avoid polluting stdout.
 """
 
 from __future__ import annotations
@@ -29,6 +30,7 @@ __all__: list[str] = ["RequestContextMiddleware"]
 logger = logging.getLogger("bulk_insert.api.access")
 
 _REQUEST_ID_HEADER = "X-Request-ID"
+_PROBE_PATHS = frozenset({"/health", "/ready"})
 
 
 class RequestContextMiddleware(BaseHTTPMiddleware):
@@ -66,16 +68,17 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
         duration_ms = round((time.perf_counter() - start) * 1000, 2)
         response.headers[_REQUEST_ID_HEADER] = request_id
 
-        logger.info(
-            "%s %s -> %d",
-            request.method,
-            request.url.path,
-            response.status_code,
-            extra={
-                "method": request.method,
-                "path": request.url.path,
-                "status_code": response.status_code,
-                "duration_ms": duration_ms,
-            },
-        )
+        if request.url.path not in _PROBE_PATHS:
+            logger.info(
+                "%s %s -> %d",
+                request.method,
+                request.url.path,
+                response.status_code,
+                extra={
+                    "method": request.method,
+                    "path": request.url.path,
+                    "status_code": response.status_code,
+                    "duration_ms": duration_ms,
+                },
+            )
         return response

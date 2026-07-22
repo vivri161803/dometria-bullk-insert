@@ -280,19 +280,50 @@ def extract_fields(
     groups = partition_by_topic(extractable)
 
     result = ExtractionOutput()
-    for topic in sorted(groups):
+    topic_names = sorted(groups)
+    logger.info(
+        "Field extraction partitioned into %d topic group(s): %s.",
+        len(topic_names),
+        topic_names,
+        extra={"topic_count": len(topic_names), "topics": topic_names},
+    )
+    for position, topic in enumerate(topic_names, start=1):
         group = groups[topic]
         strategy = group_strategy(group, effective_cfg)
         model_name = f"Group_{topic}"
+        field_names = [n.name for n in group]
         logger.info(
-            "Block 3 v2 — extracting topic '%s' (%d fields) via %s.",
+            "Extracting topic %d/%d '%s' — %d field(s) via %s: %s.",
+            position,
+            len(topic_names),
             topic,
             len(group),
             strategy,
+            field_names,
+            extra={
+                "topic": topic,
+                "topic_position": position,
+                "topic_total": len(topic_names),
+                "field_count": len(group),
+                "fields": field_names,
+                "strategy": strategy,
+            },
         )
         if strategy == SELF_CONSISTENCY:
             group_out = _extract_self_consistency(llm, group, text, effective_cfg, model_name)
         else:
             group_out = _extract_standard(llm, group, text, effective_cfg, model_name)
+        filled = sum(1 for value in group_out.values.values() if value is not None)
         result.merge(group_out)
+        logger.info(
+            "Topic '%s' done — %d/%d fields non-null in this group.",
+            topic,
+            filled,
+            len(group_out.values),
+            extra={
+                "topic": topic,
+                "filled_fields": filled,
+                "total_fields": len(group_out.values),
+            },
+        )
     return result

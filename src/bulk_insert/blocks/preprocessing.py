@@ -36,6 +36,7 @@ All other functions in this module are importable for independent testing.
 from __future__ import annotations
 
 import logging
+import time
 from functools import lru_cache
 
 import instructor
@@ -295,16 +296,49 @@ def score_and_resolve_chunks(chunks: list[Chunk], cfg: Settings | None = None) -
     client = _build_instructor_client(effective_cfg)
 
     analysed: list[Chunk] = []
-    for chunk in chunks:
+    total = len(chunks)
+    for position, chunk in enumerate(chunks, start=1):
+        logger.info(
+            "Scoring + coreference chunk %d/%d (index=%d, %d chars).",
+            position,
+            total,
+            chunk.index,
+            len(chunk.text),
+            extra={
+                "chunk_position": position,
+                "chunk_total": total,
+                "chunk_index": chunk.index,
+                "chunk_chars": len(chunk.text),
+            },
+        )
         analysed_chunk = score_and_resolve_chunk(chunk, client, cfg=effective_cfg)
         analysed.append(analysed_chunk)
+        logger.info(
+            "Chunk %d/%d scored %s/10 (coref resolved).",
+            position,
+            total,
+            analysed_chunk.relevance_score,
+            extra={
+                "chunk_position": position,
+                "chunk_total": total,
+                "chunk_index": chunk.index,
+                "relevance_score": analysed_chunk.relevance_score,
+            },
+        )
 
     scores = [c.relevance_score for c in analysed]
+    numeric_scores = [s for s in scores if s is not None]
+    mean_score = sum(numeric_scores) / max(1, len(numeric_scores))
     logger.info(
-        "Scored + coref-resolved %d chunk(s). Scores: %s. Mean: %.1f.",
+        "Scored and coreference-resolved %d chunk(s) — scores=%s mean=%.1f.",
         len(analysed),
         scores,
-        sum(s for s in scores if s is not None) / max(1, len(analysed)),
+        mean_score,
+        extra={
+            "chunk_count": len(analysed),
+            "chunk_scores": scores,
+            "mean_score": round(mean_score, 2),
+        },
     )
     return analysed
 
@@ -343,33 +377,94 @@ def preprocess(text: str, cfg: Settings | None = None) -> list[Chunk]:
         blocks.  Returns ``[]`` for empty or whitespace-only input.
     """
     effective_cfg: Settings = cfg or _default_settings
+    text_chars = len(text)
 
     if not text.strip():
-        logger.info("preprocess received empty text — returning empty list.")
+        logger.info(
+            "Preprocessing skipped — empty text (%d chars).",
+            text_chars,
+            extra={"text_chars": text_chars},
+        )
         return []
 
+    started = time.perf_counter()
+
     # Step 1: Sentence segmentation
-    logger.info("Step 1/3 — Sentence segmentation.")
+    step_started = time.perf_counter()
+    logger.info(
+        "Preprocess step 1/3 — sentence segmentation (%d chars).",
+        text_chars,
+        extra={"step": "segment", "text_chars": text_chars},
+    )
     sentences = segment_sentences(text)
-    logger.info("  → %d sentence(s) extracted.", len(sentences))
+    logger.info(
+        "Preprocess step 1/3 done — %d sentence(s).",
+        len(sentences),
+        extra={
+            "step": "segment",
+            "sentence_count": len(sentences),
+            "duration_ms": round((time.perf_counter() - step_started) * 1000, 2),
+        },
+    )
 
     if not sentences:
-        logger.warning("No sentences extracted from non-empty text.")
+        logger.warning(
+            "Preprocessing produced no sentences from non-empty text (%d chars).",
+            text_chars,
+            extra={"text_chars": text_chars},
+        )
         return []
 
     # Step 2: Chunking
+    step_started = time.perf_counter()
     logger.info(
-        "Step 2/3 — Chunking (size=%d, overlap=%d).",
+        "Preprocess step 2/3 — chunking (size=%d, overlap=%d) over %d sentence(s).",
         effective_cfg.CHUNK_SIZE,
         effective_cfg.CHUNK_OVERLAP,
+        len(sentences),
+        extra={
+            "step": "chunk",
+            "chunk_size": effective_cfg.CHUNK_SIZE,
+            "chunk_overlap": effective_cfg.CHUNK_OVERLAP,
+            "sentence_count": len(sentences),
+        },
     )
     chunks = create_chunks(sentences, effective_cfg.CHUNK_SIZE, effective_cfg.CHUNK_OVERLAP)
-    logger.info("  → %d chunk(s) created.", len(chunks))
+    logger.info(
+        "Preprocess step 2/3 done — %d chunk(s) created.",
+        len(chunks),
+        extra={
+            "step": "chunk",
+            "chunk_count": len(chunks),
+            "duration_ms": round((time.perf_counter() - step_started) * 1000, 2),
+        },
+    )
 
     # Step 3: Score + coreference resolution (single LLM call per chunk)
-    logger.info("Step 3/3 — LLM scoring + coreference resolution.")
+    step_started = time.perf_counter()
+    logger.info(
+        "Preprocess step 3/3 — LLM scoring and coreference resolution for %d chunk(s) "
+        "(model=%s).",
+        len(chunks),
+        effective_cfg.MODEL_LIGHTWEIGHT,
+        extra={
+            "step": "score",
+            "chunk_count": len(chunks),
+            "model": effective_cfg.MODEL_LIGHTWEIGHT,
+        },
+    )
     analysed = score_and_resolve_chunks(chunks, effective_cfg)
-    logger.info("Preprocessing complete. %d chunk(s) ready.", len(analysed))
+    logger.info(
+        "Preprocessing complete — %d chunk(s) ready in %.0f ms.",
+        len(analysed),
+        (time.perf_counter() - started) * 1000,
+        extra={
+            "step": "score",
+            "chunk_count": len(analysed),
+            "duration_ms": round((time.perf_counter() - step_started) * 1000, 2),
+            "total_duration_ms": round((time.perf_counter() - started) * 1000, 2),
+        },
+    )
 
     return analysed
 

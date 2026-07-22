@@ -80,58 +80,165 @@ def process_document(
     effective_cfg = cfg or _default_settings
 
     # Input guard — reject empty / whitespace-only text before any block runs.
+    text_chars = len(text) if text else 0
     if not text or not text.strip():
-        logger.warning("Pipeline id=%s rejected: empty or blank text.", doc_id)
+        logger.warning(
+            "Pipeline rejected document %s: empty or blank text (%d chars).",
+            doc_id,
+            text_chars,
+            extra={"text_chars": text_chars},
+        )
         return PipelineResult.failure(doc_id, "input", "bad_input", "text is empty or blank")
 
     started = time.perf_counter()
 
-    def _elapsed_ms() -> float:
-        return round((time.perf_counter() - started) * 1000, 2)
+    def _elapsed_ms(since: float | None = None) -> float:
+        return round((time.perf_counter() - (since if since is not None else started)) * 1000, 2)
+
+    logger.info(
+        "Pipeline started for document %s (%d chars of source text).",
+        doc_id,
+        text_chars,
+        extra={"text_chars": text_chars},
+    )
 
     current_stage: PipelineStage = "preprocess"
     try:
         set_log_block(current_stage)
-        logger.info("Pipeline id=%s — Block 1/3: preprocessing.", doc_id)
+        stage_started = time.perf_counter()
+        logger.info(
+            "Block 1/3 preprocessing — segment, chunk, score, and resolve coreferences.",
+            extra={"stage": "preprocess", "text_chars": text_chars},
+        )
         chunks = preprocess(text, cfg=effective_cfg)
+        logger.info(
+            "Block 1/3 preprocessing done — %d scored chunk(s) ready.",
+            len(chunks),
+            extra={
+                "stage": "preprocess",
+                "duration_ms": _elapsed_ms(stage_started),
+                "chunk_count": len(chunks),
+                "chunk_scores": [c.relevance_score for c in chunks],
+            },
+        )
 
         current_stage = "contract"
         set_log_block(current_stage)
-        logger.info("Pipeline id=%s — Block 2/3: contract determination.", doc_id)
+        stage_started = time.perf_counter()
+        logger.info(
+            "Block 2/3 contract determination — classify lv1/lv2/lv3 from top chunks.",
+            extra={"stage": "contract", "chunk_count": len(chunks)},
+        )
         contract = determine_contract(chunks, cfg=effective_cfg)
+        logger.info(
+            "Block 2/3 contract determination done — path %s / %s / %s.",
+            contract.lv1,
+            contract.lv2,
+            contract.lv3,
+            extra={
+                "stage": "contract",
+                "duration_ms": _elapsed_ms(stage_started),
+                "lv1": contract.lv1,
+                "lv2": contract.lv2,
+                "lv3": contract.lv3,
+            },
+        )
 
         current_stage = "extract"
         set_log_block(current_stage)
-        logger.info("Pipeline id=%s — Block 3/3: asset extraction.", doc_id)
+        stage_started = time.perf_counter()
+        logger.info(
+            "Block 3/3 asset extraction — populate contract fields from document evidence.",
+            extra={
+                "stage": "extract",
+                "lv1": contract.lv1,
+                "lv2": contract.lv2,
+                "lv3": contract.lv3,
+            },
+        )
         asset = extract_asset(chunks, contract, cfg=effective_cfg)
+        filled = sum(1 for value in asset.data.values() if value not in (None, "", [], {}))
+        review_n = len(asset.review_queue or [])
+        logger.info(
+            "Block 3/3 asset extraction done — contract=%s confidence=%.3f "
+            "completeness=%s filled_fields=%d/%d review_queue=%d.",
+            asset.contract_id,
+            asset.confidence,
+            f"{asset.completeness:.3f}" if asset.completeness is not None else "n/a",
+            filled,
+            len(asset.data),
+            review_n,
+            extra={
+                "stage": "extract",
+                "duration_ms": _elapsed_ms(stage_started),
+                "contract_id": asset.contract_id,
+                "confidence": asset.confidence,
+                "completeness": asset.completeness,
+                "filled_fields": filled,
+                "total_fields": len(asset.data),
+                "review_queue_count": review_n,
+            },
+        )
 
     except ContractDeterminationError as exc:
-        logger.warning("Pipeline id=%s — unprocessable at contract stage: %s", doc_id, exc)
+        logger.warning(
+            "Pipeline failed for document %s at contract stage (unprocessable): %s",
+            doc_id,
+            exc,
+            extra={"stage": "contract", "duration_ms": _elapsed_ms(), "error_category": "unprocessable"},
+        )
         return PipelineResult.failure(doc_id, "contract", "unprocessable", str(exc))
 
     except (ContractNotFoundError, AssetExtractionError) as exc:
-        logger.error("Pipeline id=%s — server error at extract stage: %s", doc_id, exc)
+        logger.error(
+            "Pipeline failed for document %s at extract stage (server): %s",
+            doc_id,
+            exc,
+            extra={"stage": "extract", "duration_ms": _elapsed_ms(), "error_category": "server"},
+        )
         return PipelineResult.failure(doc_id, "extract", "server", str(exc))
 
     except _RETRYABLE_ERRORS as exc:
         logger.warning(
-            "Pipeline id=%s — retryable upstream error at %s stage: %s",
+            "Pipeline failed for document %s at %s stage (retryable upstream): %s",
             doc_id,
             current_stage,
             exc,
+            extra={
+                "stage": current_stage,
+                "duration_ms": _elapsed_ms(),
+                "error_category": "retryable",
+            },
         )
         return PipelineResult.failure(doc_id, current_stage, "retryable", str(exc))
 
     except Exception as exc:  # noqa: BLE001 — fail-safe catch-all, never propagate.
-        logger.exception("Pipeline id=%s — unexpected error at %s stage.", doc_id, current_stage)
+        logger.exception(
+            "Pipeline failed for document %s at %s stage (unexpected).",
+            doc_id,
+            current_stage,
+            extra={"stage": current_stage, "duration_ms": _elapsed_ms(), "error_category": "server"},
+        )
         return PipelineResult.failure(doc_id, current_stage, "server", str(exc))
 
+    review_queue = asset.review_queue or []
     logger.info(
-        "Pipeline id=%s — complete. contract='%s', confidence=%.3f.",
+        "Pipeline complete for document %s — contract=%s confidence=%.3f "
+        "completeness=%s review_queue=%s.",
         doc_id,
         asset.contract_id,
         asset.confidence,
-        extra={"duration_ms": _elapsed_ms()},
+        f"{asset.completeness:.3f}" if asset.completeness is not None else "n/a",
+        review_queue or [],
+        extra={
+            "duration_ms": _elapsed_ms(),
+            "contract_id": asset.contract_id,
+            "confidence": asset.confidence,
+            "completeness": asset.completeness,
+            "review_queue": review_queue,
+            "text_chars": text_chars,
+            "chunk_count": len(chunks),
+        },
     )
     return PipelineResult.success(doc_id, asset)
 

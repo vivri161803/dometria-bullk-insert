@@ -13,6 +13,8 @@ __all__: list[str] = [
     "MAX_TEXT_CHARS",
     "ProcessRequest",
     "ProcessResponse",
+    "ProcedureDispatchRequest",
+    "ProcedureDispatchResponse",
     "ErrorResponse",
     "HealthResponse",
     "SetModelRequest",
@@ -40,6 +42,29 @@ class ProcessResponse(BaseModel):
     confidence: float
     completeness: float | None
     models_used: dict[str, str] = Field(serialization_alias="_models")
+
+
+class ProcedureDispatchMeta(BaseModel):
+    """Metadata attached by Connect to the async dispatch request."""
+
+    original_filename: str = Field(min_length=1)
+    mime_type: str = Field(min_length=1)
+
+
+class ProcedureDispatchRequest(BaseModel):
+    """Inbound M2M dispatch request from Dometria Connect."""
+
+    procedure_id: int = Field(ge=1)
+    source_text: str = Field(min_length=1, max_length=MAX_TEXT_CHARS)
+    user_prompt: str | None = Field(default=None, max_length=50_000)
+    meta: ProcedureDispatchMeta
+
+
+class ProcedureDispatchResponse(BaseModel):
+    """Ack body for accepted M2M dispatches."""
+
+    procedure_id: int
+    status: Literal["accepted"] = "accepted"
 
 
 class ErrorResponse(BaseModel):

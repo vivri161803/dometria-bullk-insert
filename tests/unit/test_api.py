@@ -20,6 +20,7 @@ def test_settings() -> Settings:
         MODEL_LIGHTWEIGHT="test/lightweight",
         MODEL_HEAVY="test/heavy",
         EMBEDDING_MODEL="test/embedding",
+        CONNECT_CALLBACK_TOKEN="test-callback-token",
     )
 
 
@@ -85,6 +86,62 @@ def test_process_non_empty_review_queue_is_200(client: TestClient) -> None:
         assert response.status_code == 200
         data = response.json()
         assert data["asset"]["review_queue"] == ["missing_field"]
+
+
+def test_procedures_happy_path_returns_202(client: TestClient) -> None:
+    """M1 — valid M2M dispatch is accepted and scheduled."""
+    with patch("bulk_insert.api.routes.run_procedure_callback_flow") as mock_flow:
+        response = client.post(
+            "/procedures",
+            json={
+                "procedure_id": 123,
+                "source_text": "hello world",
+                "user_prompt": "focus on square meters",
+                "meta": {
+                    "original_filename": "test.pdf",
+                    "mime_type": "application/pdf",
+                },
+            },
+        )
+
+    assert response.status_code == 202
+    assert response.json() == {"procedure_id": 123, "status": "accepted"}
+    assert mock_flow.call_count == 1
+    assert mock_flow.call_args.args[0] == 123
+    assert mock_flow.call_args.args[1] == "hello world"
+
+
+def test_procedures_accepts_missing_user_prompt(client: TestClient) -> None:
+    """M2 — user_prompt is optional in V1."""
+    with patch("bulk_insert.api.routes.run_procedure_callback_flow"):
+        response = client.post(
+            "/procedures",
+            json={
+                "procedure_id": 124,
+                "source_text": "hello world",
+                "meta": {
+                    "original_filename": "test.pdf",
+                    "mime_type": "application/pdf",
+                },
+            },
+        )
+
+    assert response.status_code == 202
+
+
+def test_procedures_validation_missing_source_text(client: TestClient) -> None:
+    """M3 — missing source_text is rejected at schema layer."""
+    response = client.post(
+        "/procedures",
+        json={
+            "procedure_id": 123,
+            "meta": {
+                "original_filename": "test.pdf",
+                "mime_type": "application/pdf",
+            },
+        },
+    )
+    assert response.status_code == 422
 
 
 def test_process_completeness_lifted(client: TestClient) -> None:
@@ -300,6 +357,24 @@ def test_process_without_key_is_401(secured_client: TestClient) -> None:
     assert response.status_code == 401
 
 
+def test_procedures_bearer_auth_passes(secured_client: TestClient) -> None:
+    """H1b — M2M /procedures accepts shared secret via Bearer token."""
+    with patch("bulk_insert.api.routes.run_procedure_callback_flow"):
+        response = secured_client.post(
+            "/procedures",
+            json={
+                "procedure_id": 200,
+                "source_text": "hello",
+                "meta": {
+                    "original_filename": "test.pdf",
+                    "mime_type": "application/pdf",
+                },
+            },
+            headers={"Authorization": "Bearer s3cret"},
+        )
+    assert response.status_code == 202
+
+
 def test_process_wrong_key_is_401(secured_client: TestClient) -> None:
     """H2 — a wrong key is rejected."""
     response = secured_client.post(
@@ -364,6 +439,17 @@ def test_request_id_header_echoed(client: TestClient) -> None:
     """H8 — the correlation id is echoed on the response header."""
     response = client.get("/health", headers={"X-Request-ID": "corr-123"})
     assert response.headers["X-Request-ID"] == "corr-123"
+
+
+def test_probe_paths_skip_access_log(client: TestClient) -> None:
+    """Probe traffic must not emit bulk_insert.api.access INFO lines."""
+    with patch("bulk_insert.api.middleware.logger") as mock_logger:
+        assert client.get("/health").status_code == 200
+        assert client.get("/ready").status_code == 200
+        assert mock_logger.info.call_count == 0
+
+        client.get("/config/models")
+        assert mock_logger.info.call_count == 1
 
 
 def test_text_over_max_length_rejected() -> None:

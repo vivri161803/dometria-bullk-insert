@@ -22,6 +22,7 @@ never raise; only structural problems (contract/tree not found) raise.
 from __future__ import annotations
 
 import logging
+import time
 
 import instructor
 
@@ -79,12 +80,36 @@ def extract_asset(
         On structural failures (missing category path in the field tree).
     """
     effective_cfg = cfg or _default_settings
+    started = time.perf_counter()
+
+    def _ms(since: float) -> float:
+        return round((time.perf_counter() - since) * 1000, 2)
 
     # Resolve the contract id (validates the lv3 exists; raises ContractNotFoundError).
     contract_id = contract_id_for(contract.lv3, effective_cfg.CONTRACTS_DIR)
+    logger.info(
+        "Extraction started for contract '%s' (%s / %s / %s) with %d chunk(s).",
+        contract_id,
+        contract.lv1,
+        contract.lv2,
+        contract.lv3,
+        len(chunks),
+        extra={
+            "contract_id": contract_id,
+            "lv1": contract.lv1,
+            "lv2": contract.lv2,
+            "lv3": contract.lv3,
+            "chunk_count": len(chunks),
+        },
+    )
 
     # Stage 1 — select this product's structural fields from the tree.
-    logger.info("Block 3 v2 — Stage 1: selecting fields for '%s'.", contract_id)
+    step_started = time.perf_counter()
+    logger.info(
+        "Extraction stage 1 — select fields for contract '%s'.",
+        contract_id,
+        extra={"stage": "select_fields", "contract_id": contract_id},
+    )
     try:
         tree_fields = select_tree_fields(contract, effective_cfg)
     except KeyError as exc:
@@ -93,28 +118,115 @@ def extract_asset(
     # Overlay the metadata sidecar → enriched field nodes.
     lv_path = (contract.lv1, contract.lv2, contract.lv3)
     nodes = enrich(tree_fields, lv_path, effective_cfg)
+    logger.info(
+        "Extraction stage 1 done — %d structural field(s), %d enriched node(s).",
+        len(tree_fields),
+        len(nodes),
+        extra={
+            "stage": "select_fields",
+            "tree_field_count": len(tree_fields),
+            "node_count": len(nodes),
+            "duration_ms": _ms(step_started),
+        },
+    )
 
     llm = client or build_instructor_client(effective_cfg)
 
     # Stages 3–4 — partition by topic + sequential, strategy-routed extraction.
-    logger.info("Block 3 v2 — Stages 3-4: extraction (%d fields).", len(nodes))
+    step_started = time.perf_counter()
+    logger.info(
+        "Extraction stages 3-4 — LLM field extraction over %d node(s) (model=%s).",
+        len(nodes),
+        effective_cfg.MODEL_HEAVY,
+        extra={
+            "stage": "extract_fields",
+            "node_count": len(nodes),
+            "model": effective_cfg.MODEL_HEAVY,
+        },
+    )
     result = extract_fields(chunks, nodes, effective_cfg, client=llm)
+    filled_after_extract = sum(1 for value in result.values.values() if value is not None)
+    logger.info(
+        "Extraction stages 3-4 done — %d/%d fields non-null after LLM extraction.",
+        filled_after_extract,
+        len(result.values),
+        extra={
+            "stage": "extract_fields",
+            "filled_fields": filled_after_extract,
+            "total_fields": len(result.values),
+            "duration_ms": _ms(step_started),
+        },
+    )
 
     # Stage 4b — deterministic value normalization (before derivation, so any
     # computed rule / reconcile operates on canonical numbers).
+    step_started = time.perf_counter()
+    logger.info(
+        "Extraction stage 4b — normalize field values.",
+        extra={"stage": "normalize"},
+    )
     normalize_fields(result, nodes, effective_cfg)
+    logger.info(
+        "Extraction stage 4b done.",
+        extra={"stage": "normalize", "duration_ms": _ms(step_started)},
+    )
 
     # Stage 4c — resolve OUT_OF_VOCAB enum fields from their own quote (§9).
+    step_started = time.perf_counter()
+    logger.info(
+        "Extraction stage 4c — resolve out-of-vocabulary enum values.",
+        extra={"stage": "resolve_oov"},
+    )
     resolve_out_of_vocab(result, nodes, effective_cfg, client=llm)
+    logger.info(
+        "Extraction stage 4c done.",
+        extra={"stage": "resolve_oov", "duration_ms": _ms(step_started)},
+    )
 
     # Stage 5+7 — computed derivations + reconcile (deterministic).
+    step_started = time.perf_counter()
+    logger.info(
+        "Extraction stage 5+7 — computed derivations and reconcile.",
+        extra={"stage": "derive_computed"},
+    )
     derive_computed(result, nodes, effective_cfg)
+    logger.info(
+        "Extraction stage 5+7 done.",
+        extra={"stage": "derive_computed", "duration_ms": _ms(step_started)},
+    )
 
     # Stage 6 — judged derivations (only if any exist).
+    step_started = time.perf_counter()
+    logger.info(
+        "Extraction stage 6 — judged derivations (LLM).",
+        extra={"stage": "derive_judged"},
+    )
     derive_judged(result, nodes, effective_cfg, client=llm)
+    logger.info(
+        "Extraction stage 6 done.",
+        extra={"stage": "derive_judged", "duration_ms": _ms(step_started)},
+    )
 
     # Stage 8 — grounding gate + completeness + assemble.
+    step_started = time.perf_counter()
+    logger.info(
+        "Extraction stage 8 — grounding gate, completeness, and asset assembly.",
+        extra={"stage": "ground"},
+    )
     grounded = ground_and_assemble(chunks, result, nodes, effective_cfg, client=llm)
+    logger.info(
+        "Extraction stage 8 done — confidence=%.3f completeness=%.3f review_queue=%d.",
+        grounded.confidence,
+        grounded.completeness,
+        len(grounded.review_queue),
+        extra={
+            "stage": "ground",
+            "confidence": grounded.confidence,
+            "completeness": grounded.completeness,
+            "review_queue_count": len(grounded.review_queue),
+            "duration_ms": _ms(step_started),
+        },
+    )
 
     asset = Asset(
         contract_id=contract_id,
@@ -125,10 +237,25 @@ def extract_asset(
         flags=grounded.flags or None,
         review_queue=grounded.review_queue or None,
     )
+    filled = sum(1 for value in asset.data.values() if value not in (None, "", [], {}))
     logger.info(
-        "Block 3 v2 complete. contract='%s' confidence=%.3f review_queue=%d.",
+        "Extraction complete for '%s' — confidence=%.3f completeness=%.3f "
+        "filled=%d/%d review_queue=%s (%.0f ms).",
         contract_id,
         grounded.confidence,
-        len(grounded.review_queue),
+        grounded.completeness,
+        filled,
+        len(asset.data),
+        grounded.review_queue or [],
+        (time.perf_counter() - started) * 1000,
+        extra={
+            "contract_id": contract_id,
+            "confidence": grounded.confidence,
+            "completeness": grounded.completeness,
+            "filled_fields": filled,
+            "total_fields": len(asset.data),
+            "review_queue": list(grounded.review_queue or []),
+            "duration_ms": _ms(started),
+        },
     )
     return asset

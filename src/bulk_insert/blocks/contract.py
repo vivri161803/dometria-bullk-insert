@@ -28,6 +28,7 @@ All functions are independently importable for unit testing.
 from __future__ import annotations
 
 import logging
+import time
 from collections import defaultdict
 from functools import lru_cache
 
@@ -335,9 +336,22 @@ def determine_contract(
         If no chunks pass the minimum score filter.
     """
     effective_cfg = cfg or _default_settings
+    started = time.perf_counter()
 
     # Step 1: Filter & select top-k
-    logger.info("Block 2 — Step 1/3: Chunk filtering & selection.")
+    logger.info(
+        "Contract step 1/3 — filter chunks by min_score=%d and select top-%d "
+        "from %d chunk(s).",
+        effective_cfg.CONTRACT_MIN_SCORE,
+        effective_cfg.CONTRACT_TOP_K,
+        len(chunks),
+        extra={
+            "step": "filter",
+            "chunk_count": len(chunks),
+            "min_score": effective_cfg.CONTRACT_MIN_SCORE,
+            "top_k": effective_cfg.CONTRACT_TOP_K,
+        },
+    )
     top_chunks = select_top_chunks(
         chunks,
         min_score=effective_cfg.CONTRACT_MIN_SCORE,
@@ -345,12 +359,31 @@ def determine_contract(
     )
 
     # Step 2: LLM lv1 extraction
-    logger.info("Block 2 — Step 2/3: LLM lv1 extraction.")
+    logger.info(
+        "Contract step 2/3 — LLM lv1 classification on %d top chunk(s) (model=%s).",
+        len(top_chunks),
+        effective_cfg.MODEL_LIGHTWEIGHT,
+        extra={
+            "step": "lv1",
+            "top_chunk_count": len(top_chunks),
+            "model": effective_cfg.MODEL_LIGHTWEIGHT,
+        },
+    )
     client = _build_instructor_client(effective_cfg)
     lv1 = extract_lv1(top_chunks, client, cfg=effective_cfg)
 
     # Step 3: Cosine similarity + weighted vote → (lv2, lv3)
-    logger.info("Block 2 — Step 3/3: Cosine similarity voting.")
+    logger.info(
+        "Contract step 3/3 — embedding similarity vote for lv2/lv3 under lv1='%s' "
+        "(embedding=%s).",
+        lv1,
+        effective_cfg.EMBEDDING_MODEL,
+        extra={
+            "step": "vote",
+            "lv1": lv1,
+            "embedding_model": effective_cfg.EMBEDDING_MODEL,
+        },
+    )
     lv2, lv3 = weighted_majority_vote(
         top_chunks,
         lv1,
@@ -360,10 +393,18 @@ def determine_contract(
     # Step 4: Assemble contract
     contract = Contract(lv1=lv1, lv2=lv2, lv3=lv3)
     logger.info(
-        "Block 2 complete. Contract: lv1='%s', lv2='%s', lv3='%s'.",
+        "Contract determination complete — %s / %s / %s (%.0f ms).",
         contract.lv1,
         contract.lv2,
         contract.lv3,
+        (time.perf_counter() - started) * 1000,
+        extra={
+            "lv1": contract.lv1,
+            "lv2": contract.lv2,
+            "lv3": contract.lv3,
+            "duration_ms": round((time.perf_counter() - started) * 1000, 2),
+            "top_chunk_count": len(top_chunks),
+        },
     )
     return contract
 

@@ -78,3 +78,6 @@ eval_progress.log
 *.oci
 docker-build.log
 rebuild.log
+
+# Local deploy script with embedded GHCR token — never commit
+scripts/deploy-docker-ghcr.local.sh

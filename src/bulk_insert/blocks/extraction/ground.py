@@ -212,10 +212,29 @@ def ground_and_assemble(
     out.confidence = max(0.0, min(1.0, grounding * completeness))
 
     logger.info(
-        "Block 3 v2 — grounded: %d fields, %d flags, %d review-queue, confidence=%.3f.",
+        "Grounding complete — %d fields, completeness=%.3f confidence=%.3f, "
+        "ungrounded=%d defaulted=%d review_queue=%s.",
         len(out.record),
-        len(out.flags),
-        len(out.review_queue),
+        out.completeness,
         out.confidence,
+        sum(
+            1
+            for flags in out.flags.values()
+            if isinstance(flags, dict) and flags.get("ungrounded")
+        ),
+        sum(
+            1
+            for flags in out.flags.values()
+            if isinstance(flags, dict) and "defaulted" in flags
+        ),
+        out.review_queue or [],
+        extra={
+            "field_count": len(out.record),
+            "completeness": out.completeness,
+            "confidence": out.confidence,
+            "flag_count": len(out.flags),
+            "review_queue": list(out.review_queue),
+            "review_queue_count": len(out.review_queue),
+        },
     )
     return out

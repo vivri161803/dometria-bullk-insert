@@ -148,5 +148,14 @@ class Settings(BaseSettings):
     API_KEY_HEADER: str = "X-API-Key"
     MAX_REQUEST_BYTES: int = 2_000_000
 
+    # Connect callback settings for the M2M adapter (`POST /procedures`).
+    CONNECT_BASE_URL: str = "https://connect.dometria.ai"
+    CONNECT_CALLBACK_TOKEN: str = ""
+    CONNECT_CALLBACK_TIMEOUT_SECONDS: float = 10.0
+    CONNECT_CALLBACK_MAX_RETRIES: int = 3
+    CONNECT_CALLBACK_RETRY_BACKOFF_SECONDS: float = 1.0
+    M2M_SCHEMA_VERSION: str = "3"
+    M2M_CONTRACT_VERSION: str | None = None
+
 
 settings = Settings()

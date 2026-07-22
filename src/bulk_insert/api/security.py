@@ -17,6 +17,16 @@ from fastapi import HTTPException, Request, status
 __all__: list[str] = ["require_api_key"]
 
 
+def _bearer_token(request: Request) -> str | None:
+    authorization = request.headers.get("Authorization")
+    if authorization is None:
+        return None
+    scheme, _, token = authorization.partition(" ")
+    if scheme.lower() != "bearer" or not token:
+        return None
+    return token
+
+
 def require_api_key(request: Request) -> None:
     """Reject the request with 401 unless a valid API key is presented.
 
@@ -28,10 +38,18 @@ def require_api_key(request: Request) -> None:
     if not expected:
         return  # auth disabled — no key configured
 
-    provided = request.headers.get(cfg.API_KEY_HEADER)
-    if provided is None or not secrets.compare_digest(provided, expected):
+    provided_header = request.headers.get(cfg.API_KEY_HEADER)
+    provided_bearer = _bearer_token(request)
+    is_header_valid = (
+        provided_header is not None and secrets.compare_digest(provided_header, expected)
+    )
+    is_bearer_valid = (
+        provided_bearer is not None and secrets.compare_digest(provided_bearer, expected)
+    )
+
+    if not is_header_valid and not is_bearer_valid:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="invalid or missing API key",
-            headers={"WWW-Authenticate": cfg.API_KEY_HEADER},
+            headers={"WWW-Authenticate": f"Bearer, {cfg.API_KEY_HEADER}"},
         )
