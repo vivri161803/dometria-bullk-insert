@@ -157,5 +157,13 @@ class Settings(BaseSettings):
     M2M_SCHEMA_VERSION: str = "3"
     M2M_CONTRACT_VERSION: str | None = None
 
+    # Connection test — periodic liveness check from Bulk Insert → Connect.
+    # CONNECT_PING_ENABLED controls whether the background loop is started.
+    # CONNECT_PING_INTERVAL_SECONDS sets the polling period (default: 60 s).
+    # CONNECT_PING_TIMEOUT_SECONDS is the per-request HTTP timeout.
+    CONNECT_PING_ENABLED: bool = True
+    CONNECT_PING_INTERVAL_SECONDS: int = 60
+    CONNECT_PING_TIMEOUT_SECONDS: float = 10.0
+
 
 settings = Settings()

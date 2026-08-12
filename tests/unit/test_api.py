@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import logging
 from unittest.mock import patch
 
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 
@@ -88,6 +90,26 @@ def test_process_non_empty_review_queue_is_200(client: TestClient) -> None:
         assert data["asset"]["review_queue"] == ["missing_field"]
 
 
+def test_process_missing_required_env_returns_503() -> None:
+    """T2b — missing processing env vars are rejected immediately."""
+    cfg = Settings(
+        OPENROUTER_API_KEY="",
+        MODEL_LIGHTWEIGHT="test/lightweight",
+        MODEL_HEAVY="test/heavy",
+        EMBEDDING_MODEL="test/embedding",
+    )
+    app = create_app(cfg)
+    app.state.ready = True
+    misconfigured_client = TestClient(app)
+
+    with patch("bulk_insert.api.routes.process_document") as mock_process:
+        response = misconfigured_client.post("/process", json={"id": "doc-123", "text": "hello"})
+
+    assert response.status_code == 503
+    assert "OPENROUTER_API_KEY" in response.json()["detail"]
+    assert mock_process.call_count == 0
+
+
 def test_procedures_happy_path_returns_202(client: TestClient) -> None:
     """M1 — valid M2M dispatch is accepted and scheduled."""
     with patch("bulk_insert.api.routes.run_procedure_callback_flow") as mock_flow:
@@ -127,6 +149,40 @@ def test_procedures_accepts_missing_user_prompt(client: TestClient) -> None:
         )
 
     assert response.status_code == 202
+
+
+def test_procedures_missing_required_env_returns_503() -> None:
+    """M2b — async dispatch fails fast when callback env vars are missing."""
+    cfg = Settings(
+        OPENROUTER_API_KEY="test",
+        MODEL_LIGHTWEIGHT="test/lightweight",
+        MODEL_HEAVY="test/heavy",
+        EMBEDDING_MODEL="test/embedding",
+        CONNECT_CALLBACK_TOKEN="",
+        CONNECT_BASE_URL="",
+    )
+    app = create_app(cfg)
+    app.state.ready = True
+    misconfigured_client = TestClient(app)
+
+    with patch("bulk_insert.api.routes.run_procedure_callback_flow") as mock_flow:
+        response = misconfigured_client.post(
+            "/procedures",
+            json={
+                "procedure_id": 124,
+                "source_text": "hello world",
+                "meta": {
+                    "original_filename": "test.pdf",
+                    "mime_type": "application/pdf",
+                },
+            },
+        )
+
+    assert response.status_code == 503
+    detail = response.json()["detail"]
+    assert "CONNECT_CALLBACK_TOKEN" in detail
+    assert "CONNECT_BASE_URL" in detail
+    assert mock_flow.call_count == 0
 
 
 def test_procedures_validation_missing_source_text(client: TestClient) -> None:
@@ -461,3 +517,112 @@ def test_text_over_max_length_rejected() -> None:
     ProcessRequest(id="ok", text="a" * MAX_TEXT_CHARS)  # at the cap — valid
     with pytest.raises(ValidationError):
         ProcessRequest(id="ok", text="a" * (MAX_TEXT_CHARS + 1))
+
+
+# ── Connection-test loop ─────────────────────────────────────────────────────────
+
+
+def test_connection_test_ping_success(caplog: pytest.LogCaptureFixture) -> None:
+    """CT1 — successful 2xx response is logged at INFO level."""
+    from unittest.mock import MagicMock
+
+    from bulk_insert.api.connection_test import ConnectionTestLoop
+
+    cfg = Settings(
+        OPENROUTER_API_KEY="test",
+        MODEL_LIGHTWEIGHT="test/lightweight",
+        MODEL_HEAVY="test/heavy",
+        EMBEDDING_MODEL="test/embedding",
+        CONNECT_BASE_URL="https://connect.dometria.ai",
+        CONNECT_CALLBACK_TOKEN="test-token",
+        CONNECT_PING_ENABLED=True,
+        CONNECT_PING_INTERVAL_SECONDS=60,
+    )
+    loop = ConnectionTestLoop(cfg)
+
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.is_success = True
+    mock_response.text = '{"status":"ok","service":"dometria-connect"}'
+
+    with patch("bulk_insert.api.connection_test.httpx.get", return_value=mock_response) as mock_get:
+        with caplog.at_level(logging.INFO, logger="bulk_insert.api.connection_test"):
+            loop._ping()
+
+    mock_get.assert_called_once()
+    call_url = mock_get.call_args.args[0]
+    assert "/api/v1/integrations/dometria-bulk-insert/connection-test" in call_url
+    assert mock_get.call_args.kwargs["headers"]["Authorization"] == "Bearer test-token"
+    assert any("Connection test OK" in r.message for r in caplog.records)
+    assert any("200" in r.message for r in caplog.records)
+
+
+def test_connection_test_ping_non_2xx(caplog: pytest.LogCaptureFixture) -> None:
+    """CT2 — non-2xx response is logged at WARNING level with body."""
+    from unittest.mock import MagicMock
+
+    from bulk_insert.api.connection_test import ConnectionTestLoop
+
+    cfg = Settings(
+        OPENROUTER_API_KEY="test",
+        MODEL_LIGHTWEIGHT="test/lightweight",
+        MODEL_HEAVY="test/heavy",
+        EMBEDDING_MODEL="test/embedding",
+        CONNECT_BASE_URL="https://connect.dometria.ai",
+        CONNECT_CALLBACK_TOKEN="test-token",
+    )
+    loop = ConnectionTestLoop(cfg)
+
+    mock_response = MagicMock()
+    mock_response.status_code = 403
+    mock_response.is_success = False
+    mock_response.text = '{"message":"forbidden"}'
+
+    with patch("bulk_insert.api.connection_test.httpx.get", return_value=mock_response):
+        with caplog.at_level(logging.WARNING, logger="bulk_insert.api.connection_test"):
+            loop._ping()
+
+    assert any("403" in r.message for r in caplog.records)
+    assert any(r.levelname == "WARNING" for r in caplog.records)
+
+
+def test_connection_test_ping_network_error(caplog: pytest.LogCaptureFixture) -> None:
+    """CT3 — network exception is caught and logged at ERROR level."""
+    from bulk_insert.api.connection_test import ConnectionTestLoop
+
+    cfg = Settings(
+        OPENROUTER_API_KEY="test",
+        MODEL_LIGHTWEIGHT="test/lightweight",
+        MODEL_HEAVY="test/heavy",
+        EMBEDDING_MODEL="test/embedding",
+        CONNECT_BASE_URL="https://connect.dometria.ai",
+        CONNECT_CALLBACK_TOKEN="test-token",
+    )
+    loop = ConnectionTestLoop(cfg)
+
+    with patch(
+        "bulk_insert.api.connection_test.httpx.get",
+        side_effect=httpx.ConnectTimeout("timed out"),
+    ):
+        with caplog.at_level(logging.ERROR, logger="bulk_insert.api.connection_test"):
+            loop._ping()
+
+    assert any(r.levelname == "ERROR" for r in caplog.records)
+    assert any("Connection test failed" in r.message for r in caplog.records)
+
+
+def test_connection_test_disabled_does_not_spawn_thread() -> None:
+    """CT4 — when CONNECT_PING_ENABLED=False, no thread is created."""
+    from bulk_insert.api.connection_test import ConnectionTestLoop
+
+    cfg = Settings(
+        OPENROUTER_API_KEY="test",
+        MODEL_LIGHTWEIGHT="test/lightweight",
+        MODEL_HEAVY="test/heavy",
+        EMBEDDING_MODEL="test/embedding",
+        CONNECT_PING_ENABLED=False,
+    )
+    loop = ConnectionTestLoop(cfg)
+    loop.start()
+    assert loop._thread is None
+    loop.stop()  # safe to call even when not started

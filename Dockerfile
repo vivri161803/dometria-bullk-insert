@@ -46,6 +46,18 @@ RUN apt-get update \
 # Minimal image: the venv, the app, the static assets, and the baked model.
 FROM python:3.13-slim AS runtime
 
+# Runtime diagnostics tools for network troubleshooting and process inspection.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        curl \
+        iputils-ping \
+        netcat-openbsd \
+        nmap \
+        procps \
+        strace \
+        telnet \
+    && rm -rf /var/lib/apt/lists/*
+
 # Non-root runtime user.
 RUN groupadd --system app && useradd --system --gid app --home-dir /app app
 

@@ -8,6 +8,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from bulk_insert.api.connection_test import ConnectionTestLoop
 from bulk_insert.api.middleware import RequestContextMiddleware
 from bulk_insert.api.routes import router
 from bulk_insert.blocks import contract as contract_block
@@ -43,6 +44,8 @@ def create_app(cfg: Settings | None = None) -> FastAPI:
     effective_cfg = cfg or _default_settings
     configure_logging(effective_cfg)
 
+    connection_test_loop = ConnectionTestLoop(effective_cfg)
+
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         """Warm heavy resources before serving; drain cleanly on shutdown."""
@@ -65,12 +68,14 @@ def create_app(cfg: Settings | None = None) -> FastAPI:
             raise
 
         app.state.ready = True
+        connection_test_loop.start()
         yield
 
         # Graceful shutdown: flip readiness so the load balancer stops routing
         # here, then let uvicorn drain in-flight requests (bounded by its
         # --timeout-graceful-shutdown). No persistent resources to release.
         app.state.ready = False
+        connection_test_loop.stop()
         logger.info("Shutdown — readiness withdrawn, draining in-flight requests.")
 
     app = FastAPI(

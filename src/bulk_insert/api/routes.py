@@ -40,10 +40,46 @@ _STATUS_MAP: dict[str, int] = {
 }
 
 
+def _missing_process_env_vars(cfg: Settings) -> list[str]:
+    """Required environment variables for synchronous processing."""
+    missing: list[str] = []
+    if not cfg.OPENROUTER_API_KEY.strip():
+        missing.append("OPENROUTER_API_KEY")
+    return missing
+
+
+def _missing_procedure_env_vars(cfg: Settings) -> list[str]:
+    """Required environment variables for async procedure dispatch/callback."""
+    missing = _missing_process_env_vars(cfg)
+    if not cfg.CONNECT_CALLBACK_TOKEN.strip():
+        missing.append("CONNECT_CALLBACK_TOKEN")
+    if not cfg.CONNECT_BASE_URL.strip():
+        missing.append("CONNECT_BASE_URL")
+    return missing
+
+
+def _service_misconfigured_response(path: str, missing_env_vars: list[str]) -> JSONResponse:
+    """Return a 503 when required runtime configuration is missing."""
+    missing = ", ".join(missing_env_vars)
+    logger.error(
+        "Rejected %s due to missing required environment variables: %s",
+        path,
+        missing,
+        extra={"path": path, "missing_env_vars": missing_env_vars},
+    )
+    return JSONResponse(
+        status_code=503,
+        content={"detail": f"service misconfigured: missing required env vars: {missing}"},
+    )
+
+
 @router.post("/process", response_model=ProcessResponse, dependencies=_AUTH, tags=["extraction"])
 def process(request_body: ProcessRequest, request: Request) -> ProcessResponse | JSONResponse:
     """Run the extraction pipeline on a single document."""
     cfg: Settings = request.app.state.settings
+    missing_env_vars = _missing_process_env_vars(cfg)
+    if missing_env_vars:
+        return _service_misconfigured_response(path="/process", missing_env_vars=missing_env_vars)
 
     # Tag every downstream log line with the caller's document id.
     set_log_id(request_body.id)
@@ -114,9 +150,14 @@ def dispatch_procedure(
     request_body: ProcedureDispatchRequest,
     background_tasks: BackgroundTasks,
     request: Request,
-) -> ProcedureDispatchResponse:
+) -> ProcedureDispatchResponse | JSONResponse:
     """Accept an async M2M dispatch and process it after the HTTP ack."""
     cfg: Settings = request.app.state.settings
+    missing_env_vars = _missing_procedure_env_vars(cfg)
+    if missing_env_vars:
+        set_log_id(str(request_body.procedure_id))
+        return _service_misconfigured_response(path="/procedures", missing_env_vars=missing_env_vars)
+
     set_log_id(str(request_body.procedure_id))
     text_chars = len(request_body.source_text)
     background_tasks.add_task(
