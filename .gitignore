@@ -50,7 +50,7 @@ coverage.xml
 *.py,cover
 .mutmut-cache
 
-# Environments
+# Environments — keep secrets local; commit only `.env.example`
 .env
 .venv
 env/
@@ -80,4 +80,4 @@ docker-build.log
 rebuild.log
 
 # Local deploy script with embedded GHCR token — never commit
-scripts/deploy-docker-ghcr.local.sh
+deploy-docker-ghcr.local.sh
