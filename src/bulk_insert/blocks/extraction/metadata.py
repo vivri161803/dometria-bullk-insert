@@ -46,6 +46,7 @@ __all__: list[str] = [
     "FieldMetadata",
     "load_field_metadata",
     "enrich",
+    "clear_field_metadata_cache",
 ]
 
 # Source-based fallback topics, mirroring the ingest seed — only used when the
@@ -221,6 +222,11 @@ def load_field_metadata(cfg: Settings | None = None) -> FieldMetadata:
         str(effective_cfg.FIELD_METADATA_PATH),
         str(effective_cfg.TOPICS_PATH),
     )
+
+
+def clear_field_metadata_cache() -> None:
+    """Invalidate cached metadata sidecar after catalog swaps."""
+    _load_field_metadata_cached.cache_clear()
 
 
 def enrich(

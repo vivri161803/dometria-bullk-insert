@@ -34,8 +34,8 @@ with `LOG_LEVEL`.
 | `413` | Payload too large | Body exceeds `MAX_REQUEST_BYTES` | Caller sent an oversized document. Raise `MAX_REQUEST_BYTES` if legitimately large, or have the caller trim. |
 | `422` | `unprocessable` / validation | No chunk cleared `CONTRACT_MIN_SCORE`, or malformed request body / over-length `text` | Usually an off-topic or empty-ish document. Inspect the payload. |
 | `502` | `retryable` | Transient OpenRouter/network failure (429/5xx/timeout) after backoff exhausted | Retry the request. If sustained, check OpenRouter status and the rate-limit section below. |
-| `500` | `server` | Missing/malformed contract schema or artifact, or an unexpected bug | Check logs for the traceback and `block`. Verify `artifacts/` + `contracts/` are present. Page on sustained `500`s. |
-| `503` | Not ready | Warm-up not finished, or shutting down | Transient at startup (~60–90 s). If persistent, warm-up failed — check startup logs (`Startup warm-up failed`); the artifacts/model likely didn't load. |
+| `500` | `server` | Missing/malformed contract schema or artifact, or an unexpected bug | Check logs for the traceback and `block`. Verify catalog sync completed (`categories.json` + contracts under `CATALOG_CACHE_ROOT`). Page on sustained `500`s. |
+| `503` | Not ready | Warm-up / initial catalog sync not finished, or shutting down | Transient at startup (warm-up + Connect full-sync; healthcheck `start-period` ~180 s). If persistent, check startup logs (`Startup warm-up failed` / catalog sync errors); Connect must be reachable. |
 
 ## Common scenarios
 
@@ -52,10 +52,10 @@ caller's HTTP timeout and any LB idle timeout exceed the worst-case document
 time. `--limit-concurrency` caps concurrent in-flight requests per replica.
 
 **Readiness flaps / never ready.** `/ready` is `503` until spaCy, the embedding
-model, the field tree, and the compiled metadata sidecar all load. A persistent
-`503` with a `Startup warm-up failed` critical log means a missing/uncompiled
-artifact — rebuild the image (artifacts are baked) or run
-`scripts/compile_metadata.py --write`.
+model, the initial catalog sync from Connect, the field tree, and the metadata
+sidecar all load. A persistent `503` with a `Startup warm-up failed` critical log
+usually means Connect was unreachable or the catalog sync failed — the container
+ships without baked contracts/categories and must download them at boot.
 
 **Rolling deploy / graceful shutdown.** On `SIGTERM`, readiness is withdrawn
 (`/ready` → `503` so the LB stops routing) and uvicorn drains in-flight requests
@@ -76,6 +76,10 @@ orchestrator's termination grace period ≥ that value.
 | `UVICORN_GRACEFUL_TIMEOUT` | `30` | Drain window on shutdown (seconds). |
 | `RUNTIME_MODEL_OVERRIDE_ENABLED` | `true` | Allow `POST /config/model`. |
 | `MODEL_HEAVY` / `MODEL_LIGHTWEIGHT` | see `config.py` | OpenRouter slugs. |
+| `CATALOG_SYNC_ENABLED` | `true` | Sync categories/contracts from Connect at boot + periodically. |
+| `CATALOG_SYNC_INTERVAL_SECONDS` | `300` | Full catalog sync period. |
+| `CATALOG_CACHE_ROOT` | `/tmp/dometria-bulk-insert/catalog-sync` | Ephemeral cache root (lost on restart). |
+| `CONNECT_BASE_URL` / `CONNECT_CALLBACK_TOKEN` | see `config.py` | Connect API base + token for catalog sync / callbacks. |
 
 The interactive OpenAPI docs are served at `/docs` (Swagger) and `/redoc`; the
 raw schema at `/openapi.json`.

@@ -23,6 +23,7 @@ def test_settings() -> Settings:
         MODEL_HEAVY="test/heavy",
         EMBEDDING_MODEL="test/embedding",
         CONNECT_CALLBACK_TOKEN="test-callback-token",
+        CATALOG_SYNC_ENABLED=False,
     )
 
 
@@ -97,6 +98,7 @@ def test_process_missing_required_env_returns_503() -> None:
         MODEL_LIGHTWEIGHT="test/lightweight",
         MODEL_HEAVY="test/heavy",
         EMBEDDING_MODEL="test/embedding",
+        CATALOG_SYNC_ENABLED=False,
     )
     app = create_app(cfg)
     app.state.ready = True
@@ -160,6 +162,7 @@ def test_procedures_missing_required_env_returns_503() -> None:
         EMBEDDING_MODEL="test/embedding",
         CONNECT_CALLBACK_TOKEN="",
         CONNECT_BASE_URL="",
+        CATALOG_SYNC_ENABLED=False,
     )
     app = create_app(cfg)
     app.state.ready = True
@@ -377,6 +380,7 @@ def test_set_model_disabled_returns_403() -> None:
         MODEL_HEAVY="test/heavy",
         EMBEDDING_MODEL="test/embedding",
         RUNTIME_MODEL_OVERRIDE_ENABLED=False,
+        CATALOG_SYNC_ENABLED=False,
     )
     app = create_app(cfg)
     app.state.ready = True
@@ -401,6 +405,7 @@ def secured_client() -> TestClient:
         MODEL_HEAVY="test/heavy",
         EMBEDDING_MODEL="test/embedding",
         API_KEY="s3cret",
+        CATALOG_SYNC_ENABLED=False,
     )
     app = create_app(cfg)
     app.state.ready = True
@@ -482,6 +487,7 @@ def test_oversized_body_is_413() -> None:
         MODEL_HEAVY="test/heavy",
         EMBEDDING_MODEL="test/embedding",
         MAX_REQUEST_BYTES=50,
+        CATALOG_SYNC_ENABLED=False,
     )
     app = create_app(cfg)
     app.state.ready = True
@@ -537,6 +543,7 @@ def test_connection_test_ping_success(caplog: pytest.LogCaptureFixture) -> None:
         CONNECT_CALLBACK_TOKEN="test-token",
         CONNECT_PING_ENABLED=True,
         CONNECT_PING_INTERVAL_SECONDS=60,
+        CATALOG_SYNC_ENABLED=False,
     )
     loop = ConnectionTestLoop(cfg)
 
@@ -570,6 +577,7 @@ def test_connection_test_ping_non_2xx(caplog: pytest.LogCaptureFixture) -> None:
         EMBEDDING_MODEL="test/embedding",
         CONNECT_BASE_URL="https://connect.dometria.ai",
         CONNECT_CALLBACK_TOKEN="test-token",
+        CATALOG_SYNC_ENABLED=False,
     )
     loop = ConnectionTestLoop(cfg)
 
@@ -597,6 +605,7 @@ def test_connection_test_ping_network_error(caplog: pytest.LogCaptureFixture) ->
         EMBEDDING_MODEL="test/embedding",
         CONNECT_BASE_URL="https://connect.dometria.ai",
         CONNECT_CALLBACK_TOKEN="test-token",
+        CATALOG_SYNC_ENABLED=False,
     )
     loop = ConnectionTestLoop(cfg)
 
@@ -621,6 +630,7 @@ def test_connection_test_disabled_does_not_spawn_thread() -> None:
         MODEL_HEAVY="test/heavy",
         EMBEDDING_MODEL="test/embedding",
         CONNECT_PING_ENABLED=False,
+        CATALOG_SYNC_ENABLED=False,
     )
     loop = ConnectionTestLoop(cfg)
     loop.start()

@@ -165,5 +165,19 @@ class Settings(BaseSettings):
     CONNECT_PING_INTERVAL_SECONDS: int = 60
     CONNECT_PING_TIMEOUT_SECONDS: float = 10.0
 
+    # Catalog sync — categories/contracts downloaded from Connect at boot and
+    # refreshed periodically. Cache is ephemeral (no PV); the container image
+    # does not bake contracts/ or the category tree.
+    CATALOG_SYNC_ENABLED: bool = True
+    CATALOG_SYNC_INTERVAL_SECONDS: int = 300
+    CATALOG_SYNC_TIMEOUT_SECONDS: float = 10.0
+    CATALOG_SYNC_MAX_RETRIES: int = 3
+    CATALOG_SYNC_RETRY_BACKOFF_SECONDS: float = 1.0
+    CATALOG_CACHE_ROOT: Path = Path("/tmp/dometria-bulk-insert/catalog-sync")
+    CATALOG_CACHE_TTL_SECONDS: int = 900
+    CATALOG_SYNC_STARTUP_BLOCKING: bool = True
+    CATALOG_SYNC_LOG_PAYLOAD_BYTES: int = 2000
+    CATEGORY_CATALOG_PATH: Path = _PROJECT_ROOT / "artifacts" / "categories.json"
+
 
 settings = Settings()

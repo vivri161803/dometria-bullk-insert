@@ -8,6 +8,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from bulk_insert.api.catalog_sync import CatalogSyncLoop
 from bulk_insert.api.connection_test import ConnectionTestLoop
 from bulk_insert.api.middleware import RequestContextMiddleware
 from bulk_insert.api.routes import router
@@ -45,6 +46,7 @@ def create_app(cfg: Settings | None = None) -> FastAPI:
     configure_logging(effective_cfg)
 
     connection_test_loop = ConnectionTestLoop(effective_cfg)
+    catalog_sync_loop = CatalogSyncLoop(effective_cfg)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -55,6 +57,9 @@ def create_app(cfg: Settings | None = None) -> FastAPI:
 
             logger.info("Warming embedding model '%s' …", effective_cfg.EMBEDDING_MODEL)
             contract_block._get_embedding_model(effective_cfg.EMBEDDING_MODEL)
+
+            logger.info("Preparing catalog snapshot …")
+            catalog_sync_loop.prepare_startup_snapshot()
 
             logger.info("Loading field tree …")
             tree.load_field_tree(effective_cfg)
@@ -68,6 +73,7 @@ def create_app(cfg: Settings | None = None) -> FastAPI:
             raise
 
         app.state.ready = True
+        catalog_sync_loop.start()
         connection_test_loop.start()
         yield
 
@@ -75,6 +81,7 @@ def create_app(cfg: Settings | None = None) -> FastAPI:
         # here, then let uvicorn drain in-flight requests (bounded by its
         # --timeout-graceful-shutdown). No persistent resources to release.
         app.state.ready = False
+        catalog_sync_loop.stop()
         connection_test_loop.stop()
         logger.info("Shutdown — readiness withdrawn, draining in-flight requests.")
 

@@ -79,7 +79,7 @@ if ! docker container inspect "$CONTAINER" >/dev/null 2>&1; then
 fi
 
 if [[ $# -eq 0 ]]; then
-    set -- /bin/sh
+    set -- /bin/bash
 fi
 
 printf 'Using container: %s\n' "$CONTAINER" >&2

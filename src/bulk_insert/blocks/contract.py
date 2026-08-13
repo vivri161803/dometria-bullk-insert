@@ -218,6 +218,7 @@ def weighted_majority_vote(
     chunks: list[Chunk],
     lv1: str,
     model_name: str,
+    cfg: Settings | None = None,
 ) -> tuple[str, str]:
     """Compute cosine similarity + weighted vote to determine ``(lv2, lv3)``.
 
@@ -239,7 +240,7 @@ def weighted_majority_vote(
     tuple[str, str]
         The winning ``(lv2_code, lv3_code)`` pair.
     """
-    candidates = get_candidate_labels(lv1)
+    candidates = get_candidate_labels(lv1, cfg=cfg)
     logger.info(
         "Stage 2 — %d candidate (lv2, lv3) pairs under lv1='%s'.",
         len(candidates),
@@ -388,6 +389,7 @@ def determine_contract(
         top_chunks,
         lv1,
         effective_cfg.EMBEDDING_MODEL,
+        cfg=effective_cfg,
     )
 
     # Step 4: Assemble contract

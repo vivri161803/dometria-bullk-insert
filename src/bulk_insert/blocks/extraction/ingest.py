@@ -57,8 +57,16 @@ _TOPIC_BY_SOURCE: dict[str, str] = {
 }
 
 
-def _lv_path_for(lv3: str) -> tuple[str, str, str]:
-    """Resolve a leaf ``lv3`` code to its full ``(lv1, lv2, lv3)`` path."""
+def _lv_path_for(lv3: str, contract_data: dict[str, Any]) -> tuple[str, str, str]:
+    """Resolve ``(lv1, lv2, lv3)`` from contract payload, with static fallback."""
+    runtime_codes = contract_data.get("_bulk_insert_codes")
+    if isinstance(runtime_codes, dict):
+        lv1 = runtime_codes.get("lv1")
+        lv2 = runtime_codes.get("lv2")
+        lv3_code = runtime_codes.get("lv3")
+        if isinstance(lv1, str) and isinstance(lv2, str) and isinstance(lv3_code, str):
+            return (lv1, lv2, lv3_code)
+
     lv2 = str(CATEGORY_ANCESTRY[lv3]["parent"])
     lv1 = str(CATEGORY_ANCESTRY[lv2]["parent"])
     return (lv1, lv2, lv3)
@@ -115,10 +123,9 @@ def _parse_contracts(
     for path in paths:
         product_id = path.stem
         lv3 = _lv3_from_stem(product_id)
-        lv_path = _lv_path_for(lv3)
-        lv1, lv2, _ = lv_path
-
         data = json.loads(path.read_text(encoding="utf-8"))["data"]
+        lv_path = _lv_path_for(lv3, data)
+        lv1, lv2, _ = lv_path
         native = data["fields"]["native"]
 
         leaf: list[dict[str, Any]] = []

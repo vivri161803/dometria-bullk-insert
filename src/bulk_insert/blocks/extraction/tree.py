@@ -42,6 +42,7 @@ __all__: list[str] = [
     "select_tree_fields",
     "signature_for",
     "items_field_name",
+    "clear_field_tree_cache",
 ]
 
 
@@ -184,6 +185,11 @@ def load_field_tree(cfg: Settings | None = None) -> _FieldTree:
     effective_cfg = cfg or _default_settings
     path = effective_cfg.ARTIFACTS_DIR / "field_tree.json"
     return _load_field_tree_cached(str(path))
+
+
+def clear_field_tree_cache() -> None:
+    """Invalidate cached field-tree snapshots after catalog swaps."""
+    _load_field_tree_cached.cache_clear()
 
 
 def signature_for(fields: list[TreeField]) -> tuple[str, ...]:

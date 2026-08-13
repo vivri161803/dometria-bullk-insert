@@ -1,5 +1,5 @@
 # Keep the build context lean. The Dockerfile only COPYs specific paths
-# (pyproject.toml, uv.lock, src, artifacts, contracts); this is a safety net.
+# (pyproject.toml, uv.lock, src); catalog cache is synced at runtime.
 
 # Virtualenv / build outputs
 .venv/
@@ -25,6 +25,11 @@ specs/
 scripts/
 sample.txt
 architecture.md
+
+# Catalog assets stay in the repo for local/offline tooling only — never baked
+# into the runtime image (synced from Connect at boot + periodically).
+contracts/
+artifacts/
 
 # Secrets & local run artifacts
 .env

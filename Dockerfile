@@ -19,10 +19,10 @@ WORKDIR /app
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 
-# 2) Application + static assets, then install the project itself.
+# 2) Application source, then install the project itself.
+# Catalog cache (contracts + category tree + derived artifacts) is NOT baked:
+# created at boot via Connect sync, then refreshed periodically (ephemeral).
 COPY src ./src
-COPY artifacts ./artifacts
-COPY contracts ./contracts
 RUN uv sync --frozen --no-dev
 
 # 3) Bake the embedding model into the HF cache (no network at runtime).
@@ -43,7 +43,8 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # ── Stage 2: runtime ───────────────────────────────────────────────────────────
-# Minimal image: the venv, the app, the static assets, and the baked model.
+# Minimal image: the venv, the app, and the baked embedding model.
+# Categories/contracts cache is downloaded from Connect at startup.
 FROM python:3.13-slim AS runtime
 
 # Runtime diagnostics tools for network troubleshooting and process inspection.
@@ -63,11 +64,9 @@ RUN groupadd --system app && useradd --system --gid app --home-dir /app app
 
 WORKDIR /app
 
-# Copy the built venv, app source, static assets, and baked model cache.
+# Copy the built venv, app source, and baked model cache (no catalog assets).
 COPY --from=builder --chown=app:app /app/.venv /app/.venv
 COPY --from=builder --chown=app:app /app/src /app/src
-COPY --from=builder --chown=app:app /app/artifacts /app/artifacts
-COPY --from=builder --chown=app:app /app/contracts /app/contracts
 COPY --from=builder --chown=app:app /opt/hf /opt/hf
 
 ENV PATH="/app/.venv/bin:${PATH}" \
@@ -81,7 +80,9 @@ ENV PATH="/app/.venv/bin:${PATH}" \
     UVICORN_GRACEFUL_TIMEOUT=30 \
     RUNTIME_MODEL_OVERRIDE_ENABLED=true \
     LOG_JSON=true \
-    LOG_LEVEL=INFO
+    LOG_LEVEL=INFO \
+    CATALOG_SYNC_ENABLED=true \
+    CATALOG_SYNC_STARTUP_BLOCKING=true
 # API_KEY is intentionally not defaulted — inject it at runtime to require the
 # X-API-Key header on /process and /config/* (unset ⇒ auth disabled).
 
@@ -90,7 +91,8 @@ USER app
 EXPOSE 8000
 
 # Liveness: the /health probe is always 200 once the process is up.
-HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=3 \
+# start-period covers warm-up + initial catalog sync from Connect.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=180s --retries=3 \
     CMD python -c "import sys,urllib.request; \
       sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=4).status == 200 else 1)"
 

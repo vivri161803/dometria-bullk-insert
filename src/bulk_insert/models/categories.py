@@ -1,7 +1,13 @@
 """Category definitions and hierarchy graph for Bulk Insert pipeline."""
 
+import json
 from enum import StrEnum
+from functools import lru_cache
+from pathlib import Path
 from typing import Literal
+
+from bulk_insert.config import Settings
+from bulk_insert.config import settings as _default_settings
 
 
 class Level1Category(StrEnum):
@@ -489,7 +495,45 @@ LEVEL_3_CODES: list[str] = [
 # ---------------------------------------------------------------------------
 
 
-def get_candidate_paths(lv1: str) -> list[tuple[str, str]]:
+def _runtime_category_tree(cfg: Settings | None = None) -> dict[str, dict[str, list[str]]]:
+    effective_cfg = cfg or _default_settings
+    payload = _load_runtime_categories_payload(str(effective_cfg.CATEGORY_CATALOG_PATH))
+    indices = payload.get("indices")
+    if isinstance(indices, dict):
+        category_tree = indices.get("category_tree")
+        if isinstance(category_tree, dict):
+            return category_tree
+    return CATEGORY_TREE
+
+
+def _runtime_category_names(cfg: Settings | None = None) -> dict[str, str]:
+    effective_cfg = cfg or _default_settings
+    payload = _load_runtime_categories_payload(str(effective_cfg.CATEGORY_CATALOG_PATH))
+    indices = payload.get("indices")
+    if isinstance(indices, dict):
+        category_names = indices.get("category_names")
+        if isinstance(category_names, dict):
+            return category_names
+    return CATEGORY_NAMES
+
+
+@lru_cache(maxsize=8)
+def _load_runtime_categories_payload(path_str: str) -> dict[str, object]:
+    path = Path(path_str)
+    if not path.exists():
+        return {}
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if isinstance(payload, dict):
+        return payload
+    return {}
+
+
+def clear_categories_cache() -> None:
+    """Invalidate cached runtime categories after catalog swaps."""
+    _load_runtime_categories_payload.cache_clear()
+
+
+def get_candidate_paths(lv1: str, cfg: Settings | None = None) -> list[tuple[str, str]]:
     """Return all valid ``(lv2, lv3)`` pairs under the given *lv1*.
 
     Parameters
@@ -507,7 +551,7 @@ def get_candidate_paths(lv1: str) -> list[tuple[str, str]]:
     KeyError
         If *lv1* is not a valid level-1 code.
     """
-    subtree = CATEGORY_TREE[lv1]  # raises KeyError if invalid
+    subtree = _runtime_category_tree(cfg)[lv1]  # raises KeyError if invalid
     paths: list[tuple[str, str]] = []
     for lv2_code, lv3_codes in subtree.items():
         for lv3_code in lv3_codes:
@@ -515,7 +559,10 @@ def get_candidate_paths(lv1: str) -> list[tuple[str, str]]:
     return paths
 
 
-def get_candidate_labels(lv1: str) -> list[tuple[tuple[str, str], str]]:
+def get_candidate_labels(
+    lv1: str,
+    cfg: Settings | None = None,
+) -> list[tuple[tuple[str, str], str]]:
     """Return ``((lv2, lv3), "Lv2Name > Lv3Name")`` for all candidates under *lv1*.
 
     The label string uses the human-readable names from :data:`CATEGORY_NAMES`,
@@ -536,11 +583,12 @@ def get_candidate_labels(lv1: str) -> list[tuple[tuple[str, str], str]]:
     KeyError
         If *lv1* is not a valid level-1 code.
     """
-    paths = get_candidate_paths(lv1)
+    paths = get_candidate_paths(lv1, cfg=cfg)
+    category_names = _runtime_category_names(cfg)
     labelled: list[tuple[tuple[str, str], str]] = []
     for lv2_code, lv3_code in paths:
-        lv2_name = CATEGORY_NAMES[lv2_code]
-        lv3_name = CATEGORY_NAMES[lv3_code]
+        lv2_name = category_names[lv2_code]
+        lv3_name = category_names[lv3_code]
         label = f"{lv2_name} > {lv3_name}"
         labelled.append(((lv2_code, lv3_code), label))
     return labelled
