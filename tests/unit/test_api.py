@@ -133,11 +133,12 @@ def test_procedures_happy_path_returns_202(client: TestClient) -> None:
     assert mock_flow.call_count == 1
     assert mock_flow.call_args.args[0] == 123
     assert mock_flow.call_args.args[1] == "hello world"
+    assert mock_flow.call_args.args[2] == "focus on square meters"
 
 
 def test_procedures_accepts_missing_user_prompt(client: TestClient) -> None:
     """M2 — user_prompt is optional in V1."""
-    with patch("bulk_insert.api.routes.run_procedure_callback_flow"):
+    with patch("bulk_insert.api.routes.run_procedure_callback_flow") as mock_flow:
         response = client.post(
             "/procedures",
             json={
@@ -151,6 +152,8 @@ def test_procedures_accepts_missing_user_prompt(client: TestClient) -> None:
         )
 
     assert response.status_code == 202
+    assert mock_flow.call_count == 1
+    assert mock_flow.call_args.args[2] is None
 
 
 def test_procedures_missing_required_env_returns_503() -> None:
@@ -434,6 +437,24 @@ def test_procedures_bearer_auth_passes(secured_client: TestClient) -> None:
             headers={"Authorization": "Bearer s3cret"},
         )
     assert response.status_code == 202
+
+
+def test_procedures_x_api_key_is_rejected_when_bearer_missing(secured_client: TestClient) -> None:
+    """H1c — /procedures requires Bearer auth when API_KEY is configured."""
+    with patch("bulk_insert.api.routes.run_procedure_callback_flow"):
+        response = secured_client.post(
+            "/procedures",
+            json={
+                "procedure_id": 201,
+                "source_text": "hello",
+                "meta": {
+                    "original_filename": "test.pdf",
+                    "mime_type": "application/pdf",
+                },
+            },
+            headers={"X-API-Key": "s3cret"},
+        )
+    assert response.status_code == 401
 
 
 def test_process_wrong_key_is_401(secured_client: TestClient) -> None:

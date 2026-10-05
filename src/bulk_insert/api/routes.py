@@ -164,6 +164,7 @@ def dispatch_procedure(
         run_procedure_callback_flow,
         request_body.procedure_id,
         request_body.source_text,
+        request_body.user_prompt,
         cfg,
     )
     logger.info(

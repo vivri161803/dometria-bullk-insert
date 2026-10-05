@@ -27,6 +27,11 @@ def _bearer_token(request: Request) -> str | None:
     return token
 
 
+def _is_procedures_dispatch(request: Request) -> bool:
+    normalized_path = request.url.path.rstrip("/") or "/"
+    return request.method.upper() == "POST" and normalized_path == "/procedures"
+
+
 def require_api_key(request: Request) -> None:
     """Reject the request with 401 unless a valid API key is presented.
 
@@ -46,6 +51,16 @@ def require_api_key(request: Request) -> None:
     is_bearer_valid = (
         provided_bearer is not None and secrets.compare_digest(provided_bearer, expected)
     )
+
+    if _is_procedures_dispatch(request):
+        if is_bearer_valid:
+            return
+
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="invalid or missing bearer token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     if not is_header_valid and not is_bearer_valid:
         raise HTTPException(
